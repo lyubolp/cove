@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import FastAPI, Depends
 from sqlmodel import create_engine, Session, select
 
-from models.config_item import KeyValue, Project
+from cove.models.config_item import KeyValue, Project
 
 app = FastAPI()
 engine = create_engine("sqlite:///database.db")
