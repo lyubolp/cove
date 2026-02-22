@@ -1,7 +1,7 @@
 [project]
-name = "config-service"
+name = "cove"
 version = "0.1.0"
-description = "Add your description here"
+description = "A simple API for managing a collection of configuration items and files."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
