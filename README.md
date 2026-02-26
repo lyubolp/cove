@@ -12,7 +12,6 @@ WIP: Items are either public (no API key needed) or private (login or API key ne
 ## Config item CRUD
 
 - [X] Create
-- [ ] Edit project_id
 - [X] Toogle access (public/private)
 - [X] Change value
 - [X] Delete item
@@ -32,4 +31,5 @@ WIP: Items are either public (no API key needed) or private (login or API key ne
 - [ ] Account creation
 - [ ] Account login
 - [ ] Project membership
-- [ ] 
+- [ ] API keys registration
+- [ ] Limit access
