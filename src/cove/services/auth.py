@@ -10,6 +10,7 @@ from pwdlib import PasswordHash
 from sqlmodel import Session, select
 
 from ..dependencies import get_session
+from ..models.projects import Project, ProjectUserLink
 from ..models.users import TokenData, User
 
 dotenv.load_dotenv()
@@ -20,6 +21,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/token")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/users/token", auto_error=False)
 
 
 def verify_password(plain_password: str, password_hash: str) -> bool:
@@ -55,7 +57,7 @@ def create_access_token(data: dict) -> str:
 
 async def get_current_user(
     session: Annotated[Session, Depends(get_session)], token: Annotated[str, Depends(oauth2_scheme)]
-):
+) -> User:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
@@ -74,3 +76,39 @@ async def get_current_user(
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
     return user
+
+
+async def get_current_user_non_fatal(
+    session: Annotated[Session, Depends(get_session)], token: Annotated[str | None, Depends(oauth2_scheme_optional)]
+) -> User | None:
+    print(f"{token=}")
+    if token is None:
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+
+        if user_id is None:
+            return None
+
+        token_data = TokenData(user_id=user_id)
+    except jwt.PyJWTError:
+        return None
+
+    statement = select(User).where(User.id == token_data.user_id)
+    user = session.exec(statement).first()
+
+    return user
+
+
+async def does_user_have_access_to_project(
+    session: Annotated[Session, Depends(get_session)],
+    current_user: User,
+    project_id: str,
+) -> bool:
+
+    statement = select(ProjectUserLink).where(
+        ProjectUserLink.project_id == project_id, ProjectUserLink.user_id == current_user.id
+    )
+
+    return session.exec(statement).first() is not None
