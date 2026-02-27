@@ -1,4 +1,5 @@
 import uuid
+
 from sqlmodel import Field, SQLModel
 
 
@@ -19,3 +20,8 @@ class KeyValue(ConfigItem, table=True):
 
 # class PythonConfig(ConfigItem):
 #     python_value: str
+
+
+class ConfigItemUserLink(SQLModel, table=True):
+    config_item_id: str = Field(foreign_key="configitem.id", primary_key=True)
+    user_id: str = Field(foreign_key="user.id", primary_key=True)
