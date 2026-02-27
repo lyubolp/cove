@@ -16,12 +16,13 @@ from alembic import op
 revision: str = "443d2f4dd185"
 down_revision: Union[str, Sequence[str], None] = "f3d85ac5d377"
 branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = "443d2f4dd185"
+depends_on: Union[str, Sequence[str], None] = "f3d85ac5d377"
 
 
 def upgrade() -> None:
     """Upgrade schema."""
-    op.drop_column("apikey", "access_for_project_id")
+    with op.batch_alter_table("apikey") as batch_op:
+        batch_op.drop_column("access_for_project_id")
 
     op.create_table(
         "projectuserlink",
