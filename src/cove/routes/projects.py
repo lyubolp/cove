@@ -1,20 +1,39 @@
 from typing import Annotated, Sequence
+
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select
 
-from ..dependencies import get_session
 from cove.models.projects import Project
 
+from ..dependencies import get_session
+from ..models.users import User
+from ..services.auth import does_user_have_access_to_project, get_current_user_non_fatal
 
 router = APIRouter(prefix="/project")
 
 
 @router.get("/")
-async def get_all_projects(session: Annotated[Session, Depends(get_session)]) -> Sequence[Project]:
+async def get_all_projects(
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
+) -> Sequence[Project]:
     statement = select(Project)
     results = session.exec(statement)
 
-    return results.all()
+    projects = results.all()
+
+    public_projects = [project for project in projects if project.is_public]
+
+    private_projects_with_access = []
+
+    if current_user is not None:
+        private_projects_with_access = [
+            project
+            for project in projects
+            if not project.is_public and await does_user_have_access_to_project(session, current_user, project.id)
+        ]
+
+    return public_projects + private_projects_with_access
 
 
 @router.post("/{name}")
