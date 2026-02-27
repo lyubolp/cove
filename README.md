@@ -20,9 +20,9 @@ WIP: Items are either public (no API key needed) or private (login or API key ne
 ## Project CRUD
 
 - [X] Create
-- [ ] Edit name
+- [X] Edit name
 - [X] Toogle access
-- [ ] Delete project
+- [X] Delete project
 - [X] Get all items in project
 
 
@@ -33,3 +33,10 @@ WIP: Items are either public (no API key needed) or private (login or API key ne
 - [ ] Project membership
 - [ ] API keys registration
 - [ ] Limit access
+
+## Production/development configurations
+
+
+## JSON files
+
+## Python files
