@@ -1,5 +1,6 @@
 import uuid
 from sqlmodel import Field, SQLModel
+from pydantic import BaseModel
 
 
 class User(SQLModel, table=True):
@@ -13,3 +14,12 @@ class APIKey(SQLModel, table=True):
     user_id: str = Field(foreign_key="user.id")
     key: str
     access_for_project_id: str = Field(foreign_key="project.id")
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    user_id: str | None = None
