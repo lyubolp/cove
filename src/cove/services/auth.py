@@ -1,15 +1,16 @@
 import os
 from datetime import datetime, timedelta, timezone
-
+from typing import Annotated
 
 import dotenv
 import jwt
-from pydantic import BaseModel
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
 from pwdlib import PasswordHash
-from sqlmodel import select
+from sqlmodel import Session, select
 
-from ..models.users import User
-
+from ..dependencies import get_session
+from ..models.users import TokenData, User
 
 dotenv.load_dotenv()
 password_hasher = PasswordHash.recommended()
@@ -18,10 +19,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "default_secret_key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/token")
 
 
 def verify_password(plain_password: str, password_hash: str) -> bool:
@@ -32,9 +30,9 @@ def get_password_hash(password: str) -> str:
     return password_hasher.hash(password)
 
 
-def authenticate_user(db, username: str, password: str):
+def authenticate_user(session, username: str, password: str):
     statement = select(User).where(User.username == username)
-    user = db.exec(statement).first()
+    user = session.exec(statement).first()
 
     if user is None:
         return False
@@ -53,3 +51,26 @@ def create_access_token(data: dict) -> str:
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
     return encoded_jwt
+
+
+async def get_current_user(
+    session: Annotated[Session, Depends(get_session)], token: Annotated[str, Depends(oauth2_scheme)]
+):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Could not validate credentials")
+
+        token_data = TokenData(user_id=user_id)
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
+
+    statement = select(User).where(User.id == token_data.user_id)
+    user = session.exec(statement).first()
+
+    if user is None:
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
+
+    return user
