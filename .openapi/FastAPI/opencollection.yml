@@ -1,7 +1,7 @@
 opencollection: 1.0.0
 
 info:
-  name: api-requests
+  name: FastAPI
 config:
   proxy:
     inherit: true
@@ -19,3 +19,7 @@ extensions:
     ignore:
       - node_modules
       - .git
+    presets:
+      request:
+        type: http
+        url: http://127.0.0.1:8000
