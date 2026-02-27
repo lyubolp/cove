@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.18.4",
+    "dotenv>=0.9.9",
     "fastapi[standard]>=0.129.2",
     "pwdlib[argon2]>=0.3.0",
     "pyjwt>=2.11.0",
@@ -18,3 +19,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
+]
