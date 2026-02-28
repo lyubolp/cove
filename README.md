@@ -11,31 +11,29 @@ WIP: Items are either public (no API key needed) or private (login or API key ne
 
 ## Config item CRUD
 
-- [X] Create
-- [X] Toogle access (public/private)
-- [X] Change value
-- [X] Delete item
-- [X] Get an item by key
+- Create
+- Toogle access (public/private)
+- Change value
+- Delete item
+- Get an item by key
 
 ## Project CRUD
 
-- [X] Create
-- [X] Edit name
-- [X] Toogle access
-- [X] Delete project
-- [X] Get all items in project
-
+- Create
+- Edit name
+- Toogle access
+- Delete project
+- Get all items in project
 
 ## Auth
 
-- [ ] Account creation
-- [ ] Account login
-- [ ] Project membership
-- [ ] API keys registration
-- [ ] Limit access
+- Account creation
+- Account login
+- Limit access based on access rules
+- Add people to project and items
+- API keys registration
 
 ## Production/development configurations
-
 
 ## JSON files
 
