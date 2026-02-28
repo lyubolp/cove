@@ -1,0 +1,50 @@
+opencollection: 1.0.0
+
+info:
+  name: FastAPI - 1
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  auth:
+    type: oauth2
+    flow: resource_owner_password_credentials
+    accessTokenUrl: http://127.0.0.1:8000/users/token
+    credentials:
+      clientId: id
+      clientSecret: secrte
+      placement: basic_auth_header
+    resourceOwner:
+      username: lyubolp
+      password: "1234"
+    tokenConfig:
+      placement:
+        header: Bearer
+    settings:
+      autoFetchToken: false
+      autoRefreshToken: false
+  scripts:
+    - type: after-response
+      code: |-
+        if(req.getAuthMode() == 'oauth2' && res.body.access_token) {
+            bru.setVar('access_token_set_by_collection_script', res.body.access_token);
+        }
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git
+    presets:
+      request:
+        type: http
+        url: 127.0.0.1:8000
