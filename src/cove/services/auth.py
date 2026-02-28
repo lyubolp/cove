@@ -112,3 +112,16 @@ async def does_user_have_access_to_project(
     )
 
     return session.exec(statement).first() is not None
+
+
+async def get_current_user_with_project_access(
+    session: Annotated[Session, Depends(get_session)],
+    token: Annotated[str, Depends(oauth2_scheme)],
+    project_id: str,
+) -> User:
+    user = await get_current_user(session, token)
+
+    if not await does_user_have_access_to_project(session, user, project_id):
+        raise HTTPException(status_code=403, detail="User does not have access to this project")
+
+    return user
