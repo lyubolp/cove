@@ -3,11 +3,16 @@ from typing import Annotated, Sequence
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select
 
-from cove.models.projects import Project
+from cove.models.projects import Project, ProjectUserLink
 
 from ..dependencies import get_session
 from ..models.users import User
-from ..services.auth import does_user_have_access_to_project, get_current_user_non_fatal
+from ..services.auth import (
+    does_user_have_access_to_project,
+    get_current_user,
+    get_current_user_non_fatal,
+    get_current_user_with_project_access,
+)
 
 router = APIRouter(prefix="/project")
 
@@ -37,17 +42,25 @@ async def get_all_projects(
 
 
 @router.post("/{name}")
-async def create_project(name: str, session: Annotated[Session, Depends(get_session)]) -> dict[str, str]:
+async def create_project(
+    name: str,
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict[str, str]:
     project = Project(name=name, is_public=False)
 
     session.add(project)
+
+    user_link = ProjectUserLink(project_id=project.id, user_id=current_user.id)
+    session.add(user_link)
     session.commit()
     session.refresh(project)
+
     return {"status": "OK", "project_id": project.id}
 
 
-@router.patch("/{project_id}")
-async def toggle_project_visibility(
+@router.patch("/{project_id}", dependencies=[Depends(get_current_user_with_project_access)])
+async def update_project(
     project_id: str,
     session: Annotated[Session, Depends(get_session)],
     name: str | None = None,
@@ -71,7 +84,7 @@ async def toggle_project_visibility(
         return {"error": "Project not found"}
 
 
-@router.delete("/{project_id}")
+@router.delete("/{project_id}", dependencies=[Depends(get_current_user_with_project_access)])
 async def delete_project(project_id: str, session: Annotated[Session, Depends(get_session)]) -> dict[str, str]:
     statement = select(Project).where(Project.id == project_id)
     project = session.exec(statement).first()
