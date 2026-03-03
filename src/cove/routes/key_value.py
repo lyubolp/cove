@@ -74,7 +74,7 @@ async def get_key_value(
     else:
         if current_user is None:
             raise HTTPException(status_code=403, detail="User does not have access to this item")
-        elif await does_user_have_access_to_item(session, current_user, result.id):
+        elif await does_user_have_access_to_project(session, current_user, result.id):
             return {"key": result.key, "value": result.value}
         else:
             raise HTTPException(status_code=403, detail="User does not have access to this item")
