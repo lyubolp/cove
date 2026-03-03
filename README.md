@@ -7,7 +7,9 @@ Configuration items can be key:value pairs, whole JSON files, Python files and o
 
 We can have production and development configurations.
 
-WIP: Items are either public (no API key needed) or private (login or API key needed).
+Projects are either public (no API key needed) or private (login or API key needed).
+
+Some items in public projects can also be private.
 
 ## Config item CRUD
 
@@ -38,3 +40,13 @@ WIP: Items are either public (no API key needed) or private (login or API key ne
 ## JSON files
 
 ## Python files
+
+
+## Access rules
+
+Visibility of:
+
+|             | Public project | Private project |
+|-------------|----------------|-----------------|
+| Public item | Everyone       | Project access  |
+| Private item| Item access    | Item access     |
