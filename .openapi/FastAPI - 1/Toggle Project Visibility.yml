@@ -5,17 +5,17 @@ info:
 
 http:
   method: PATCH
-  url: "{{baseUrl}}/project/:project_id?name=changed"
+  url: "{{baseUrl}}/project/:project_id?is_public=1"
   params:
     - name: name
       value: changed
       type: query
-    - name: is_public
-      value: ""
-      type: query
       disabled: true
+    - name: is_public
+      value: "1"
+      type: query
     - name: project_id
-      value: 0e1d0498-f384-4f5b-8995-83ec8d67dcaa
+      value: "1234"
       type: path
   auth: inherit
 

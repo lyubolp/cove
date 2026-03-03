@@ -6,24 +6,7 @@ info:
 http:
   method: GET
   url: "{{baseUrl}}/users/test"
-  auth:
-    type: oauth2
-    flow: resource_owner_password_credentials
-    accessTokenUrl: http://127.0.0.1:8000/users/token
-    refreshTokenUrl: "{{oauth_refresh_url}}"
-    credentials:
-      clientId: id
-      clientSecret: secret
-      placement: header
-    resourceOwner:
-      username: lyubo2
-      password: "1234"
-    tokenConfig:
-      placement:
-        header: Bearer
-    settings:
-      autoFetchToken: false
-      autoRefreshToken: true
+  auth: inherit
 
 runtime:
   variables:

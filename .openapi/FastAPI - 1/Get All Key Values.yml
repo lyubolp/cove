@@ -8,23 +8,9 @@ http:
   url: "{{baseUrl}}/key_value/:project_id"
   params:
     - name: project_id
-      value: 0e1d0498-f384-4f5b-8995-83ec8d67dcaa
+      value: "1234"
       type: path
-  auth:
-    type: oauth2
-    flow: resource_owner_password_credentials
-    accessTokenUrl: /users/token
-    refreshTokenUrl: "{{oauth_refresh_url}}"
-    credentials:
-      clientId: "{{oauth_client_id}}"
-      clientSecret: "{{oauth_client_secret}}"
-      placement: header
-    tokenConfig:
-      placement:
-        header: Bearer
-    settings:
-      autoFetchToken: false
-      autoRefreshToken: true
+  auth: inherit
 
 runtime:
   variables:
