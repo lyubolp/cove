@@ -14,7 +14,6 @@ from ..services.auth import (
     does_user_have_access_to_project,
     get_current_user,
     get_current_user_non_fatal,
-    get_current_user_with_item_access,
     get_current_user_with_project_access,
 )
 
@@ -137,6 +136,10 @@ async def delete_key_value(project_id: str, key: str, session: Annotated[Session
     item = session.exec(statement).first()
 
     if item is not None:
+
+        user_links = session.exec(select(ConfigItemUserLink).where(ConfigItemUserLink.config_item_id == item.id)).all()
+        for link in user_links:
+            session.delete(link)
         session.delete(item)
         session.commit()
         return {"status": "OK"}

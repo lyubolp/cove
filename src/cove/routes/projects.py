@@ -90,6 +90,10 @@ async def delete_project(project_id: str, session: Annotated[Session, Depends(ge
     project = session.exec(statement).first()
 
     if project:
+        user_links = session.exec(select(ProjectUserLink).where(ProjectUserLink.project_id == project.id)).all()
+        for link in user_links:
+            session.delete(link)
+
         session.delete(project)
         session.commit()
         return {"status": "OK"}
