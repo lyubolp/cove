@@ -26,7 +26,7 @@ async def get_all_key_values(
     session: Annotated[Session, Depends(get_session)],
     current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
 ):
-    project_statement = select(Project).where(KeyValue.project_id == project_id)
+    project_statement = select(Project).where(Project.id == project_id)
     project = session.exec(project_statement).first()
 
     if project is None:
@@ -37,19 +37,17 @@ async def get_all_key_values(
 
     statement = select(KeyValue).where(KeyValue.project_id == project_id)
 
-    if project.is_public:
-        items = session.exec(statement)
-        for item in items:
-            if item.is_public:
-                accessible_items.append(item)
-            else:
-                if current_user is not None and await does_user_have_access_to_item(session, current_user, item.id):
-                    accessible_items.append(item)
-    else:
+    if not project.is_public:
         if current_user is None or not await does_user_have_access_to_project(session, current_user, project_id):
             raise HTTPException(status_code=403, detail="User does not have access to this project")
-        items = session.exec(statement)
-        accessible_items = list(items.all())
+
+    items = session.exec(statement)
+    for item in items:
+        if item.is_public:
+            accessible_items.append(item)
+        else:
+            if current_user is not None and await does_user_have_access_to_item(session, current_user, item.id):
+                accessible_items.append(item)
 
     return [{"key": item.key, "value": item.value} for item in accessible_items]
 

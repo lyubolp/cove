@@ -112,7 +112,7 @@ async def does_user_have_access_to_project(
         ProjectUserLink.project_id == project_id, ProjectUserLink.user_id == current_user.id
     )
 
-    return session.exec(statement).all() != []
+    return session.exec(statement).first() is not None
 
 
 async def does_user_have_access_to_item(
