@@ -88,7 +88,6 @@ async def create_key_value(
     session: Annotated[Session, Depends(get_session)],
     current_user: Annotated[User, Depends(get_current_user)],
 ):
-
     if await does_user_have_access_to_project(session, current_user, project_id) is False:
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
@@ -136,7 +135,6 @@ async def delete_key_value(project_id: str, key: str, session: Annotated[Session
     item = session.exec(statement).first()
 
     if item is not None:
-
         user_links = session.exec(select(ConfigItemUserLink).where(ConfigItemUserLink.config_item_id == item.id)).all()
         for link in user_links:
             session.delete(link)

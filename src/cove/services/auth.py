@@ -10,8 +10,8 @@ from pwdlib import PasswordHash
 from sqlmodel import Session, select
 
 from ..dependencies import get_session
-from ..models.config_item import ConfigItemUserLink, KeyValue
-from ..models.projects import Project, ProjectUserLink
+from ..models.config_item import ConfigItemUserLink
+from ..models.projects import ProjectUserLink
 from ..models.users import TokenData, User
 
 dotenv.load_dotenv()

@@ -8,7 +8,6 @@ from cove.models.projects import Project, ProjectUserLink
 from ..dependencies import get_session
 from ..models.users import User
 from ..services.auth import (
-    does_user_have_access_to_project,
     get_current_user,
     get_current_user_non_fatal,
     get_current_user_with_project_access,
