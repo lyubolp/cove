@@ -139,3 +139,16 @@ async def get_current_user_with_project_access(
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
     return user
+
+
+async def get_current_user_with_item_access(
+    session: Annotated[Session, Depends(get_session)],
+    token: Annotated[str, Depends(oauth2_scheme)],
+    item_id: str,
+) -> User:
+    user = await get_current_user(session, token)
+
+    if not await does_user_have_access_to_item(session, user, item_id):
+        raise HTTPException(status_code=403, detail="User does not have access to this item")
+
+    return user
