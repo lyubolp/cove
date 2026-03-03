@@ -30,8 +30,7 @@ async def get_all_key_values(
     project = session.exec(project_statement).first()
 
     if project is None:
-        # TODO - this should probably be a 404 instead of a 200 with an error message
-        return {"error": "Project not found"}
+        raise HTTPException(status_code=404, detail="Project not found")
 
     accessible_items = []
 
@@ -49,7 +48,7 @@ async def get_all_key_values(
             if current_user is not None and await does_user_have_access_to_item(session, current_user, item.id):
                 accessible_items.append(item)
 
-    return [{"key": item.key, "value": item.value} for item in accessible_items]
+    return [{"key": item.key, "value": item.value, "is_public": item.is_public} for item in accessible_items]
 
 
 @router.get("/{project_id}/{key}")
@@ -141,3 +140,48 @@ async def delete_key_value(project_id: str, key: str, session: Annotated[Session
         return {"status": "OK"}
     else:
         return {"error": "Key not found"}
+
+
+@router.post("/{project_id}/{key}/access/{user_id}", dependencies=[Depends(get_current_user_with_project_access)])
+async def add_user_to_key_value(
+    project_id: str,
+    key: str,
+    user_id: str,
+    session: Annotated[Session, Depends(get_session)],
+):
+    statement = select(KeyValue).where(KeyValue.project_id == project_id, KeyValue.key == key)
+    item = session.exec(statement).first()
+
+    if item is None:
+        return {"error": "Key not found"}
+
+    user_link = ConfigItemUserLink(config_item_id=item.id, user_id=user_id)
+    session.add(user_link)
+    session.commit()
+    return {"status": "OK"}
+
+
+@router.delete("/{project_id}/{key}/access/{user_id}", dependencies=[Depends(get_current_user_with_project_access)])
+async def remove_user_from_key_value(
+    project_id: str,
+    key: str,
+    user_id: str,
+    session: Annotated[Session, Depends(get_session)],
+):
+    statement = select(KeyValue).where(KeyValue.project_id == project_id, KeyValue.key == key)
+    item = session.exec(statement).first()
+
+    if item is None:
+        return {"error": "Key not found"}
+
+    link_statement = select(ConfigItemUserLink).where(
+        ConfigItemUserLink.config_item_id == item.id, ConfigItemUserLink.user_id == user_id
+    )
+    link = session.exec(link_statement).first()
+
+    if link:
+        session.delete(link)
+        session.commit()
+        return {"status": "OK"}
+    else:
+        return {"error": "User does not have access to this item"}

@@ -112,3 +112,20 @@ async def add_user_to_project(
     session.add(link)
     session.commit()
     return {"status": "OK"}
+
+
+@router.delete("/{project_id}/access/{user_id}", dependencies=[Depends(get_current_user_with_project_access)])
+async def remove_user_from_project(
+    project_id: str, user_id: str, session: Annotated[Session, Depends(get_session)]
+) -> dict[str, str]:
+    statement = select(ProjectUserLink).where(
+        ProjectUserLink.project_id == project_id, ProjectUserLink.user_id == user_id
+    )
+    link = session.exec(statement).first()
+
+    if link:
+        session.delete(link)
+        session.commit()
+        return {"status": "OK"}
+    else:
+        return {"error": "Link not found"}
