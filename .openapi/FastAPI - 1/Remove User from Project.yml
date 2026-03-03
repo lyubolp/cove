@@ -1,17 +1,17 @@
 info:
-  name: Add User to Project
+  name: Remove User from Project
   type: http
-  seq: 14
+  seq: 15
 
 http:
-  method: POST
+  method: DELETE
   url: "{{baseUrl}}/project/:project_id/access/:user_id"
   params:
-    - name: user_id
-      value: dffad742-fbf6-4a61-9346-1a159f1dac6c
-      type: path
     - name: project_id
       value: ca328b32-e724-4110-8ea9-cfb638218b47
+      type: path
+    - name: user_id
+      value: dffad742-fbf6-4a61-9346-1a159f1dac6c
       type: path
   auth: inherit
 

@@ -19,6 +19,7 @@ request:
     type: oauth2
     flow: resource_owner_password_credentials
     accessTokenUrl: http://127.0.0.1:8000/users/token
+    refreshTokenUrl: http://127.0.0.1:8000/users/token
     credentials:
       clientId: id
       clientSecret: secrte

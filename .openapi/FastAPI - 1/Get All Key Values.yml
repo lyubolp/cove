@@ -8,7 +8,7 @@ http:
   url: "{{baseUrl}}/key_value/:project_id"
   params:
     - name: project_id
-      value: 295fb2d8-8614-4053-9cab-59064e4ec2f4
+      value: "1234"
       type: path
   auth: inherit
 
