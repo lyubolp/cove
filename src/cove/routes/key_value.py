@@ -6,12 +6,16 @@ from sqlmodel import Session, select
 from cove.models.config_item import KeyValue
 
 from ..dependencies import get_session
+from ..models.config_item import ConfigItemUserLink
 from ..models.projects import Project
 from ..models.users import User
 from ..services.auth import (
     does_user_have_access_to_item,
     does_user_have_access_to_project,
+    get_current_user,
     get_current_user_non_fatal,
+    get_current_user_with_item_access,
+    get_current_user_with_project_access,
 )
 
 router = APIRouter(prefix="/key_value")
@@ -52,27 +56,56 @@ async def get_all_key_values(
 
 
 @router.get("/{project_id}/{key}")
-async def get_key_value(project_id: str, key: str, session: Annotated[Session, Depends(get_session)]):
+async def get_key_value(
+    project_id: str,
+    key: str,
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
+):
     statement = select(KeyValue).where(KeyValue.project_id == project_id, KeyValue.key == key)
     result = session.exec(statement).first()
 
-    if result:
-        return {"key": result.key, "value": result.value, "is_public": result.is_public}
-    else:
+    if result is None:
         return {"error": "Key not found"}
+
+    # Check if the item is public or if the user has access to it
+
+    if result.is_public:
+        return {"key": result.key, "value": result.value}
+    else:
+        if current_user is None:
+            raise HTTPException(status_code=403, detail="User does not have access to this item")
+        elif await does_user_have_access_to_item(session, current_user, result.id):
+            return {"key": result.key, "value": result.value}
+        else:
+            raise HTTPException(status_code=403, detail="User does not have access to this item")
 
 
 @router.post("/{project_id}/{key}/{value}")
-async def create_key_value(project_id: str, key: str, value: str, session: Annotated[Session, Depends(get_session)]):
+async def create_key_value(
+    project_id: str,
+    key: str,
+    value: str,
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+
+    if await does_user_have_access_to_project(session, current_user, project_id) is False:
+        raise HTTPException(status_code=403, detail="User does not have access to this project")
+
     item = KeyValue(project_id=project_id, key=key, value=value, is_public=False)
 
     session.add(item)
+
+    item_link = ConfigItemUserLink(config_item_id=item.id, user_id=current_user.id)
+    session.add(item_link)
+
     session.commit()
     session.refresh(item)
     return {"status": "OK"}
 
 
-@router.patch("/{project_id}/{key}")
+@router.patch("/{project_id}/{key}", dependencies=[Depends(get_current_user_with_project_access)])
 async def update_key_value(
     project_id: str,
     key: str,
@@ -98,7 +131,7 @@ async def update_key_value(
         return {"error": "Key not found"}
 
 
-@router.delete("/{project_id}/{key}")
+@router.delete("/{project_id}/{key}", dependencies=[Depends(get_current_user_with_project_access)])
 async def delete_key_value(project_id: str, key: str, session: Annotated[Session, Depends(get_session)]):
     statement = select(KeyValue).where(KeyValue.project_id == project_id, KeyValue.key == key)
     item = session.exec(statement).first()
