@@ -8,9 +8,14 @@ http:
   url: "{{baseUrl}}/project/:name"
   params:
     - name: name
-      value: ""
+      value: sample_project_3
       type: path
   auth: inherit
+
+runtime:
+  variables:
+    - name: baseUrl
+      value: http://127.0.0.1:8000
 
 settings:
   encodeUrl: true

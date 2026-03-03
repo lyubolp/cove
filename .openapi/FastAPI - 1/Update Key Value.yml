@@ -5,23 +5,27 @@ info:
 
 http:
   method: PATCH
-  url: "{{baseUrl}}/key_value/:project_id/:key"
+  url: "{{baseUrl}}/key_value/:project_id/:key?value=world"
   params:
-    - name: project_id
-      value: ""
-      type: path
-    - name: key
-      value: ""
-      type: path
     - name: value
-      value: ""
+      value: world
       type: query
-      disabled: true
     - name: is_public
       value: ""
       type: query
       disabled: true
+    - name: project_id
+      value: 02bb8584-0684-407c-a1f6-c1ebcc123dce
+      type: path
+    - name: key
+      value: ping
+      type: path
   auth: inherit
+
+runtime:
+  variables:
+    - name: baseUrl
+      value: http://127.0.0.1:8000
 
 settings:
   encodeUrl: true

@@ -27,6 +27,7 @@ request:
       username: lyubolp
       password: "1234"
     tokenConfig:
+      id: http://127.0.0.1:8000/users/token
       placement:
         header: Bearer
     settings:

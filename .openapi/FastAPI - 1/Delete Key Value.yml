@@ -8,12 +8,17 @@ http:
   url: "{{baseUrl}}/key_value/:project_id/:key"
   params:
     - name: project_id
-      value: ""
+      value: "1234"
       type: path
     - name: key
-      value: ""
+      value: new_key
       type: path
   auth: inherit
+
+runtime:
+  variables:
+    - name: baseUrl
+      value: http://127.0.0.1:8000
 
 settings:
   encodeUrl: true

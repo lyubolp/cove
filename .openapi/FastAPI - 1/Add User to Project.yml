@@ -1,0 +1,27 @@
+info:
+  name: Add User to Project
+  type: http
+  seq: 14
+
+http:
+  method: POST
+  url: "{{baseUrl}}/project/:project_id/access/:user_id"
+  params:
+    - name: user_id
+      value: dffad742-fbf6-4a61-9346-1a159f1dac6c
+      type: path
+    - name: project_id
+      value: 295fb2d8-8614-4053-9cab-59064e4ec2f4
+      type: path
+  auth: inherit
+
+runtime:
+  variables:
+    - name: baseUrl
+      value: http://127.0.0.1:8000
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
