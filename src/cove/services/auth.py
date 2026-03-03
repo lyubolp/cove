@@ -10,6 +10,7 @@ from pwdlib import PasswordHash
 from sqlmodel import Session, select
 
 from ..dependencies import get_session
+from ..models.config_item import ConfigItemUserLink, KeyValue
 from ..models.projects import Project, ProjectUserLink
 from ..models.users import TokenData, User
 
@@ -109,6 +110,19 @@ async def does_user_have_access_to_project(
 
     statement = select(ProjectUserLink).where(
         ProjectUserLink.project_id == project_id, ProjectUserLink.user_id == current_user.id
+    )
+
+    return session.exec(statement).first() is not None
+
+
+async def does_user_have_access_to_item(
+    session: Annotated[Session, Depends(get_session)],
+    current_user: User,
+    item_id: str,
+) -> bool:
+
+    statement = select(ConfigItemUserLink).where(
+        ConfigItemUserLink.config_item_id == item_id, ConfigItemUserLink.user_id == current_user.id
     )
 
     return session.exec(statement).first() is not None
