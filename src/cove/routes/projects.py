@@ -44,6 +44,33 @@ async def get_all_projects(
     return public_projects + private_projects_with_access
 
 
+@router.get("/{project_id}")
+async def get_project(
+    project_id: str,
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
+) -> Project | dict[str, str]:
+    statement = select(Project).where(Project.id == project_id)
+    project = session.exec(statement).first()
+
+    if project:
+        if project.is_public:
+            return project
+        else:
+            if current_user is not None:
+                project_under_user_statement = select(ProjectUserLink).where(
+                    ProjectUserLink.user_id == current_user.id, ProjectUserLink.project_id == project.id
+                )
+                user_link = session.exec(project_under_user_statement).first()
+
+                if user_link:
+                    return project
+
+        return {"error": "Project not found"}
+    else:
+        return {"error": "Project not found"}
+
+
 @router.post("/{name}")
 async def create_project(
     name: str,
