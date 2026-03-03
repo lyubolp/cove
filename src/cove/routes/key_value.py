@@ -1,20 +1,54 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
-from ..dependencies import get_session
 from cove.models.config_item import KeyValue
 
+from ..dependencies import get_session
+from ..models.projects import Project
+from ..models.users import User
+from ..services.auth import (
+    does_user_have_access_to_item,
+    does_user_have_access_to_project,
+    get_current_user_non_fatal,
+)
 
 router = APIRouter(prefix="/key_value")
 
 
 @router.get("/{project_id}")
-async def get_all_key_values(project_id: str, session: Annotated[Session, Depends(get_session)]):
-    statement = select(KeyValue).where(KeyValue.project_id == project_id)
-    results = session.exec(statement)
+async def get_all_key_values(
+    project_id: str,
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
+):
+    project_statement = select(Project).where(KeyValue.project_id == project_id)
+    project = session.exec(project_statement).first()
 
-    return [{"key": item.key, "value": item.value} for item in results]
+    if project is None:
+        # TODO - this should probably be a 404 instead of a 200 with an error message
+        return {"error": "Project not found"}
+
+    accessible_items = []
+
+    statement = select(KeyValue).where(KeyValue.project_id == project_id)
+
+    if project.is_public:
+        items = session.exec(statement)
+        for item in items:
+            if item.is_public:
+                accessible_items.append(item)
+            else:
+                if current_user is not None and await does_user_have_access_to_item(session, current_user, item.id):
+                    accessible_items.append(item)
+    else:
+        if current_user is None or not await does_user_have_access_to_project(session, current_user, project_id):
+            raise HTTPException(status_code=403, detail="User does not have access to this project")
+        items = session.exec(statement)
+        accessible_items = list(items.all())
+
+    return [{"key": item.key, "value": item.value} for item in accessible_items]
 
 
 @router.get("/{project_id}/{key}")
