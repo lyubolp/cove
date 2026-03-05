@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 
-from cove.routes import key_value, projects, users
+from cove.routes import api_keys, key_value, projects, users
 
 app = FastAPI()
 
 
+app.include_router(api_keys.router)
 app.include_router(key_value.router)
 app.include_router(projects.router)
 app.include_router(users.router)

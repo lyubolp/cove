@@ -6,6 +6,7 @@ from sqlmodel import Session, SQLModel, create_engine
 from cove.dependencies import get_session
 
 # Import all models so SQLModel.metadata is fully populated before create_all
+from cove.models.api_keys import APIKey
 from cove.models.config_item import ConfigItemUserLink, KeyValue
 from cove.models.projects import Project, ProjectUserLink
 from cove.models.users import User
