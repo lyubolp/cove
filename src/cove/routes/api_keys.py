@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 from ..dependencies import get_session
 from ..models.api_keys import APIKey, APIKeyCreated, APIKeyPublic
 from ..models.users import User
-from ..services.auth import does_user_have_access_to_project, get_current_user
+from ..services.auth.oauth2 import does_user_have_access_to_project, get_current_user
 
 router = APIRouter(prefix="/api_keys")
 

@@ -9,7 +9,7 @@ from ..dependencies import get_session
 from ..models.config_item import ConfigItemUserLink
 from ..models.projects import Project
 from ..models.users import User
-from ..services.auth import (
+from ..services.auth.oauth2 import (
     does_user_have_access_to_item,
     does_user_have_access_to_project,
     get_current_user,

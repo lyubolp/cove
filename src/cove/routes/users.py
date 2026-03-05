@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 from cove.models.users import Token, User
 
 from ..dependencies import get_session
-from ..services.auth import (
+from ..services.auth.oauth2 import (
     authenticate_user,
     create_access_token,
     get_current_user,

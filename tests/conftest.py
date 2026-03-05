@@ -10,7 +10,7 @@ from cove.models.api_keys import APIKey
 from cove.models.config_item import ConfigItemUserLink, KeyValue
 from cove.models.projects import Project, ProjectUserLink
 from cove.models.users import User
-from cove.services.auth import get_current_user_non_fatal
+from cove.services.auth.oauth2 import get_current_user_non_fatal
 from main import app
 
 TEST_DATABASE_URL = "sqlite:///:memory:"
