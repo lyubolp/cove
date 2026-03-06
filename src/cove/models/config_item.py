@@ -20,8 +20,3 @@ class KeyValue(ConfigItem, table=True):
 
 # class PythonConfig(ConfigItem):
 #     python_value: str
-
-
-class ConfigItemUserLink(SQLModel, table=True):
-    config_item_id: str = Field(foreign_key="keyvalue.id", primary_key=True)
-    user_id: str = Field(foreign_key="user.id", primary_key=True)

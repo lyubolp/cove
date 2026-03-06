@@ -6,11 +6,9 @@ from sqlmodel import Session, select
 from cove.models.config_item import KeyValue
 
 from ..dependencies import get_session
-from ..models.config_item import ConfigItemUserLink
 from ..models.projects import Project
 from ..models.users import User
 from ..services.auth.oauth2 import (
-    does_user_have_access_to_item,
     does_user_have_access_to_project,
     get_current_user,
     get_current_user_non_fatal,
@@ -32,8 +30,6 @@ async def get_all_key_values(
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    accessible_items = []
-
     statement = select(KeyValue).where(KeyValue.project_id == project_id)
 
     if not project.is_public:
@@ -41,14 +37,8 @@ async def get_all_key_values(
             raise HTTPException(status_code=403, detail="User does not have access to this project")
 
     items = session.exec(statement)
-    for item in items:
-        if item.is_public:
-            accessible_items.append(item)
-        else:
-            if current_user is not None and await does_user_have_access_to_item(session, current_user, item.id):
-                accessible_items.append(item)
 
-    return [{"key": item.key, "value": item.value, "is_public": item.is_public} for item in accessible_items]
+    return [{"key": item.key, "value": item.value} for item in items]
 
 
 @router.get("/{project_id}/{key}")
@@ -92,9 +82,6 @@ async def create_key_value(
 
     session.add(item)
 
-    item_link = ConfigItemUserLink(config_item_id=item.id, user_id=current_user.id)
-    session.add(item_link)
-
     session.commit()
     session.refresh(item)
     return {"status": "OK"}
@@ -132,56 +119,8 @@ async def delete_key_value(project_id: str, key: str, session: Annotated[Session
     item = session.exec(statement).first()
 
     if item is not None:
-        user_links = session.exec(select(ConfigItemUserLink).where(ConfigItemUserLink.config_item_id == item.id)).all()
-        for link in user_links:
-            session.delete(link)
         session.delete(item)
         session.commit()
         return {"status": "OK"}
     else:
         return {"error": "Key not found"}
-
-
-@router.post("/{project_id}/{key}/access/{user_id}", dependencies=[Depends(get_current_user_with_project_access)])
-async def add_user_to_key_value(
-    project_id: str,
-    key: str,
-    user_id: str,
-    session: Annotated[Session, Depends(get_session)],
-):
-    statement = select(KeyValue).where(KeyValue.project_id == project_id, KeyValue.key == key)
-    item = session.exec(statement).first()
-
-    if item is None:
-        return {"error": "Key not found"}
-
-    user_link = ConfigItemUserLink(config_item_id=item.id, user_id=user_id)
-    session.add(user_link)
-    session.commit()
-    return {"status": "OK"}
-
-
-@router.delete("/{project_id}/{key}/access/{user_id}", dependencies=[Depends(get_current_user_with_project_access)])
-async def remove_user_from_key_value(
-    project_id: str,
-    key: str,
-    user_id: str,
-    session: Annotated[Session, Depends(get_session)],
-):
-    statement = select(KeyValue).where(KeyValue.project_id == project_id, KeyValue.key == key)
-    item = session.exec(statement).first()
-
-    if item is None:
-        return {"error": "Key not found"}
-
-    link_statement = select(ConfigItemUserLink).where(
-        ConfigItemUserLink.config_item_id == item.id, ConfigItemUserLink.user_id == user_id
-    )
-    link = session.exec(link_statement).first()
-
-    if link:
-        session.delete(link)
-        session.commit()
-        return {"status": "OK"}
-    else:
-        return {"error": "User does not have access to this item"}

@@ -5,12 +5,11 @@ from typing import Annotated
 import dotenv
 import jwt
 from fastapi import Depends, HTTPException
-from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer
 from pwdlib import PasswordHash
 from sqlmodel import Session, select
 
 from ...dependencies import get_session
-from ...models.config_item import ConfigItemUserLink
 from ...models.projects import ProjectUserLink
 from ...models.users import TokenData, User
 
@@ -115,19 +114,6 @@ async def does_user_have_access_to_project(
     return session.exec(statement).first() is not None
 
 
-async def does_user_have_access_to_item(
-    session: Annotated[Session, Depends(get_session)],
-    current_user: User,
-    item_id: str,
-) -> bool:
-
-    statement = select(ConfigItemUserLink).where(
-        ConfigItemUserLink.config_item_id == item_id, ConfigItemUserLink.user_id == current_user.id
-    )
-
-    return session.exec(statement).first() is not None
-
-
 async def get_current_user_with_project_access(
     session: Annotated[Session, Depends(get_session)],
     token: Annotated[str, Depends(oauth2_scheme)],
@@ -137,18 +123,5 @@ async def get_current_user_with_project_access(
 
     if not await does_user_have_access_to_project(session, user, project_id):
         raise HTTPException(status_code=403, detail="User does not have access to this project")
-
-    return user
-
-
-async def get_current_user_with_item_access(
-    session: Annotated[Session, Depends(get_session)],
-    token: Annotated[str, Depends(oauth2_scheme)],
-    item_id: str,
-) -> User:
-    user = await get_current_user(session, token)
-
-    if not await does_user_have_access_to_item(session, user, item_id):
-        raise HTTPException(status_code=403, detail="User does not have access to this item")
 
     return user
