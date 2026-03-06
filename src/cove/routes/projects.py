@@ -7,6 +7,10 @@ from cove.models.projects import Project, ProjectUserLink
 
 from ..dependencies import get_session
 from ..models.users import User
+from ..services.auth.api_keys import (
+    api_key_header,
+    does_api_key_grant_access_to_project,
+)
 from ..services.auth.oauth2 import (
     get_current_user,
     get_current_user_non_fatal,
@@ -20,6 +24,7 @@ router = APIRouter(prefix="/project")
 async def get_all_projects(
     session: Annotated[Session, Depends(get_session)],
     current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
+    api_key: Annotated[str | None, Depends(api_key_header)],
 ) -> Sequence[Project]:
     statement = select(Project)
     results = session.exec(statement)
@@ -40,6 +45,10 @@ async def get_all_projects(
 
             if project and not project.is_public:
                 private_projects_with_access.append(project)
+    elif api_key is not None:
+        for project in projects:
+            if not project.is_public and does_api_key_grant_access_to_project(session, api_key, project.id):
+                private_projects_with_access.append(project)
 
     return public_projects + private_projects_with_access
 
@@ -49,6 +58,7 @@ async def get_project(
     project_id: str,
     session: Annotated[Session, Depends(get_session)],
     current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
+    api_key: Annotated[str | None, Depends(api_key_header)],
 ) -> Project | dict[str, str]:
     statement = select(Project).where(Project.id == project_id)
     project = session.exec(statement).first()
@@ -65,6 +75,8 @@ async def get_project(
 
                 if user_link:
                     return project
+            elif api_key is not None and does_api_key_grant_access_to_project(session, api_key, project.id):
+                return project
 
         return {"error": "Project not found"}
     else:
