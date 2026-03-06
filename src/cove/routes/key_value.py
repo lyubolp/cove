@@ -54,18 +54,8 @@ async def get_key_value(
     if result is None:
         return {"error": "Key not found"}
 
-    # Check if the item is public or if the user has access to it
-
-    if result.is_public:
-        return {"key": result.key, "value": result.value}
-    else:
-        if current_user is None:
-            raise HTTPException(status_code=403, detail="User does not have access to this item")
-        elif await does_user_have_access_to_project(session, current_user, result.id):
-            return {"key": result.key, "value": result.value}
-        else:
-            raise HTTPException(status_code=403, detail="User does not have access to this item")
-
+    return {"key": result.key, "value": result.value}
+    
 
 @router.post("/{project_id}/{key}/{value}")
 async def create_key_value(
@@ -78,7 +68,7 @@ async def create_key_value(
     if await does_user_have_access_to_project(session, current_user, project_id) is False:
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
-    item = KeyValue(project_id=project_id, key=key, value=value, is_public=False)
+    item = KeyValue(project_id=project_id, key=key, value=value)
 
     session.add(item)
 

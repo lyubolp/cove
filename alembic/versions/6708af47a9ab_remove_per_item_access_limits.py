@@ -22,6 +22,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
     op.drop_table("configitemuserlink")
+    op.drop_column("keyvalue", "is_public")
 
 
 def downgrade() -> None:
@@ -34,3 +35,5 @@ def downgrade() -> None:
         sa.ForeignKeyConstraint(["user_id"], ["user.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("config_item_id", "user_id"),
     )
+
+    op.add_column("keyvalue", sa.Column("is_public", sa.BOOLEAN(), nullable=True))
