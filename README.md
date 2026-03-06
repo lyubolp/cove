@@ -47,3 +47,11 @@ Authentication can be provided as a JWT (Bearer token) or an API key via the `x-
 | Any item | Everyone (incl. anon.) | Users with project access, or a valid API key  |
 
 > Per-item access control is planned but not yet implemented.
+Public project - accessible by everybody
+Private project - accessible only by users/API keys
+
+
+## API keys
+
+One key per user and project.
+API keys are used for accessing private projects, not creating/updating/deleting projects.
