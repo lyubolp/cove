@@ -7,6 +7,7 @@ from sqlmodel import Session, select
 from ..dependencies import get_session
 from ..models.api_keys import APIKey, APIKeyCreated, APIKeyPublic
 from ..models.users import User
+from ..services.auth.api_keys import get_api_key_hash
 from ..services.auth.oauth2 import does_user_have_access_to_project, get_current_user
 
 router = APIRouter(prefix="/api_keys")
@@ -22,15 +23,23 @@ async def create_api_key(
     if not await does_user_have_access_to_project(session, current_user, project_id):
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
+    raw_key = str(uuid.uuid4())
     api_key = APIKey(
         user_id=current_user.id,
-        key=str(uuid.uuid4()),
+        key=get_api_key_hash(raw_key),
         access_for_project_id=project_id,
     )
+
+    result_key = APIKeyCreated(
+        id=api_key.id,
+        key=raw_key,
+        access_for_project_id=project_id,
+    )
+
     session.add(api_key)
     session.commit()
     session.refresh(api_key)
-    return api_key
+    return result_key
 
 
 @router.get("/", response_model=list[APIKeyPublic])
