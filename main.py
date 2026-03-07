@@ -1,3 +1,8 @@
+"""Entry point for the Cove FastAPI application.
+
+Registers all route routers and exposes a /health endpoint.
+"""
+
 from fastapi import FastAPI
 
 from cove.routes import api_keys, key_value, projects, users
@@ -13,4 +18,5 @@ app.include_router(users.router)
 
 @app.get("/health")
 async def ping():
+    """Health-check endpoint. Returns a simple status payload."""
     return {"message": "healthy"}

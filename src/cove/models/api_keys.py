@@ -1,3 +1,5 @@
+"""SQLModel and Pydantic models for API keys."""
+
 import uuid
 
 from pydantic import BaseModel
@@ -5,6 +7,8 @@ from sqlmodel import Field, SQLModel
 
 
 class APIKey(SQLModel, table=True):
+    """A hashed API key owned by a user and scoped to a single project."""
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     user_id: str = Field(foreign_key="user.id")
     key: str

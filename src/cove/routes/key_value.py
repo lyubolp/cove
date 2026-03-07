@@ -1,3 +1,5 @@
+"""Routes for reading and writing key-value configuration items within a project."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -21,6 +23,11 @@ async def get_all_key_values(
     current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
     api_key: Annotated[str | None, Depends(api_key_header)],
 ):
+    """Return all key-value items for a project.
+
+    Public projects are accessible anonymously. Private projects require the caller
+    to be authenticated (JWT or API key) and have project access.
+    """
     project_statement = select(Project).where(Project.id == project_id)
     project = session.exec(project_statement).first()
 
@@ -50,6 +57,11 @@ async def get_key_value(
     current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
     api_key: Annotated[str | None, Depends(api_key_header)],
 ):
+    """Return a single key-value item by key within a project.
+
+    Applies the same access-control rules as ``get_all_key_values``.
+    Returns an error payload if the key does not exist.
+    """
     project_statement = select(Project).where(Project.id == project_id)
     project = session.exec(project_statement).first()
 
@@ -84,6 +96,11 @@ async def create_key_value(
     current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
     api_key: Annotated[str | None, Depends(api_key_header)],
 ):
+    """Create a new key-value item in the specified project.
+
+    Requires authentication and project access. Raises 403 if the caller lacks
+    credentials or project membership.
+    """
     if current_user is None and api_key is None:
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
@@ -112,6 +129,12 @@ async def update_key_value(
     value: str | None = None,
     is_public: bool | None = None,
 ):
+    """Update the value of an existing key-value item.
+
+    Only fields supplied in the query string are modified. Requires authentication
+    and project access; raises 403 if access is denied. Returns an error payload
+    if the key does not exist.
+    """
     if current_user is None and api_key is None:
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
@@ -125,7 +148,7 @@ async def update_key_value(
     item = session.exec(statement).first()
 
     if item is None:
-        raise HTTPException(status_code=404, detail="Key not found")
+        return {"error": "Key not found"}
 
     if value is not None:
         item.value = value
@@ -147,7 +170,11 @@ async def delete_key_value(
     current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
     api_key: Annotated[str | None, Depends(api_key_header)],
 ):
+    """Delete a key-value item from a project.
 
+    Requires authentication and project access; raises 403 if access is denied.
+    Returns an error payload if the key does not exist.
+    """
     if current_user is None and api_key is None:
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
@@ -161,7 +188,7 @@ async def delete_key_value(
     item = session.exec(statement).first()
 
     if item is None:
-        raise HTTPException(status_code=404, detail="Key not found")
+        return {"error": "Key not found"}
 
     session.delete(item)
     session.commit()

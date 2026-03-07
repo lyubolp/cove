@@ -1,3 +1,5 @@
+"""Routes for creating, listing, rotating, and revoking API keys."""
+
 import uuid
 from typing import Annotated
 

@@ -1,3 +1,5 @@
+"""Routes for managing projects and user-project access."""
+
 from typing import Annotated, Sequence
 
 from fastapi import APIRouter, Depends
@@ -7,15 +9,8 @@ from cove.models.projects import Project, ProjectUserLink
 
 from ..dependencies import get_session
 from ..models.users import User
-from ..services.auth.api_keys import (
-    api_key_header,
-    does_api_key_grant_access_to_project,
-)
-from ..services.auth.oauth2 import (
-    get_current_user,
-    get_current_user_non_fatal,
-    get_current_user_with_project_access,
-)
+from ..services.auth.api_keys import api_key_header, does_api_key_grant_access_to_project
+from ..services.auth.oauth2 import get_current_user, get_current_user_non_fatal, get_current_user_with_project_access
 
 router = APIRouter(prefix="/project")
 
@@ -26,6 +21,12 @@ async def get_all_projects(
     current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
     api_key: Annotated[str | None, Depends(api_key_header)],
 ) -> Sequence[Project]:
+    """Return all projects visible to the caller.
+
+    Always includes every public project. Private projects are included only when
+    the caller is authenticated and holds a ``ProjectUserLink`` for them, or when
+    the supplied API key grants access.
+    """
     statement = select(Project)
     results = session.exec(statement)
 
@@ -60,6 +61,11 @@ async def get_project(
     current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
     api_key: Annotated[str | None, Depends(api_key_header)],
 ) -> Project | dict[str, str]:
+    """Return a single project by id.
+
+    Returns an error payload when the project does not exist or the caller lacks
+    access to a private project.
+    """
     statement = select(Project).where(Project.id == project_id)
     project = session.exec(statement).first()
 
@@ -90,6 +96,11 @@ async def create_project(
     session: Annotated[Session, Depends(get_session)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> dict[str, str]:
+    """Create a new private project owned by the authenticated user.
+
+    A ``ProjectUserLink`` is automatically created so the creator has access.
+    Returns the new project's id in the response payload.
+    """
     project = Project(name=name, is_public=False)
 
     session.add(project)
@@ -109,6 +120,10 @@ async def update_project(
     name: str | None = None,
     is_public: bool | None = None,
 ) -> dict[str, str]:
+    """Update a project's name or visibility. Requires project access.
+
+    Only fields provided in the query string are modified.
+    """
     statement = select(Project).where(Project.id == project_id)
     project = session.exec(statement).first()
 
@@ -129,6 +144,7 @@ async def update_project(
 
 @router.delete("/{project_id}", dependencies=[Depends(get_current_user_with_project_access)])
 async def delete_project(project_id: str, session: Annotated[Session, Depends(get_session)]) -> dict[str, str]:
+    """Delete a project and all its user-access links. Requires project access."""
     statement = select(Project).where(Project.id == project_id)
     project = session.exec(statement).first()
 
@@ -151,6 +167,7 @@ async def delete_project(project_id: str, session: Annotated[Session, Depends(ge
 async def add_user_to_project(
     project_id: str, user_id: str, session: Annotated[Session, Depends(get_session)]
 ) -> dict[str, str]:
+    """Grant a user access to a project by creating a ``ProjectUserLink``. Requires project access."""
     link = ProjectUserLink(project_id=project_id, user_id=user_id)
     session.add(link)
     session.commit()
@@ -164,6 +181,7 @@ async def add_user_to_project(
 async def remove_user_from_project(
     project_id: str, user_id: str, session: Annotated[Session, Depends(get_session)]
 ) -> dict[str, str]:
+    """Revoke a user's access to a project by deleting the ``ProjectUserLink``. Requires project access."""
     statement = select(ProjectUserLink).where(
         ProjectUserLink.project_id == project_id, ProjectUserLink.user_id == user_id
     )

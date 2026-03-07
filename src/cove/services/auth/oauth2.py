@@ -1,3 +1,5 @@
+"""JWT-based authentication helpers and FastAPI dependency functions."""
+
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
@@ -25,14 +27,20 @@ oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/users/token", auto_erro
 
 
 def verify_password(plain_password: str, password_hash: str) -> bool:
+    """Return True if ``plain_password`` matches the stored Argon2 hash."""
     return password_hasher.verify(plain_password, password_hash)
 
 
 def get_password_hash(password: str) -> str:
+    """Return the Argon2 hash of ``password``."""
     return password_hasher.hash(password)
 
 
 def authenticate_user(session, username: str, password: str):
+    """Look up a user by username and verify their password.
+
+    Returns the ``User`` instance on success, or ``False`` if credentials are invalid.
+    """
     statement = select(User).where(User.username == username)
     user = session.exec(statement).first()
 
@@ -46,6 +54,7 @@ def authenticate_user(session, username: str, password: str):
 
 
 def create_access_token(data: dict) -> str:
+    """Create a signed JWT that expires after ``ACCESS_TOKEN_EXPIRE_MINUTES`` minutes."""
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
@@ -59,6 +68,10 @@ async def get_current_user(
     session: Annotated[Session, Depends(get_session)],
     token: Annotated[str, Depends(oauth2_scheme)],
 ) -> User:
+    """FastAPI dependency that decodes the JWT and returns the authenticated ``User``.
+
+    Raises 401 if the token is missing, expired, or invalid.
+    """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
@@ -83,6 +96,11 @@ async def get_current_user_non_fatal(
     session: Annotated[Session, Depends(get_session)],
     token: Annotated[str | None, Depends(oauth2_scheme_optional)],
 ) -> User | None:
+    """FastAPI dependency that attempts to decode the JWT without raising on failure.
+
+    Returns the ``User`` if the token is valid, otherwise returns ``None``. Intended
+    for endpoints that support both authenticated and anonymous access.
+    """
     print(f"{token=}")
     if token is None:
         return None
@@ -108,6 +126,7 @@ async def does_user_have_access_to_project(
     current_user: User,
     project_id: str,
 ) -> bool:
+    """Return True if a ``ProjectUserLink`` exists for the given user and project."""
 
     statement = select(ProjectUserLink).where(
         ProjectUserLink.project_id == project_id,
@@ -122,6 +141,10 @@ async def get_current_user_with_project_access(
     token: Annotated[str, Depends(oauth2_scheme)],
     project_id: str,
 ) -> User:
+    """FastAPI dependency that requires a valid JWT and project membership.
+
+    Raises 401 if unauthenticated, 403 if the user lacks access to the project.
+    """
     user = await get_current_user(session, token)
 
     if not await does_user_have_access_to_project(session, user, project_id):
