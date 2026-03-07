@@ -1,4 +1,4 @@
-# config-service
+# Cove
 A service for managing configuration items (key-value pairs) organised into projects. Projects have per-user access control and support both JWT and API-key authentication.
 
 ## Config item CRUD
