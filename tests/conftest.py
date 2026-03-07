@@ -7,7 +7,7 @@ from cove.dependencies import get_session
 
 # Import all models so SQLModel.metadata is fully populated before create_all
 from cove.models.api_keys import APIKey
-from cove.models.config_item import ConfigItemUserLink, KeyValue
+from cove.models.config_item import KeyValue
 from cove.models.projects import Project, ProjectUserLink
 from cove.models.users import User
 from cove.services.auth.oauth2 import get_current_user_non_fatal
@@ -38,10 +38,10 @@ def seeded_data(test_engine):
         session.flush()
 
         # Items
-        first = KeyValue(project_id=foo.id, key="first", value="1", is_public=True)
-        second = KeyValue(project_id=foo.id, key="second", value="2", is_public=False)
-        third = KeyValue(project_id=bar.id, key="third", value="3", is_public=True)
-        fourth = KeyValue(project_id=bar.id, key="fourth", value="4", is_public=False)
+        first = KeyValue(project_id=foo.id, key="first", value="1")
+        second = KeyValue(project_id=foo.id, key="second", value="2")
+        third = KeyValue(project_id=bar.id, key="third", value="3")
+        fourth = KeyValue(project_id=bar.id, key="fourth", value="4")
         session.add_all([first, second, third, fourth])
         session.flush()
 
@@ -52,15 +52,13 @@ def seeded_data(test_engine):
         session.add_all([user_with_access, user_without_access, user_with_full_bar_access])
         session.flush()
 
-        # user_with_access: item access to "second" in Foo + project access to Bar (no item access to "fourth")
-        item_link = ConfigItemUserLink(config_item_id=second.id, user_id=user_with_access.id)
+        # user_with_access: project access to Bar
         project_link = ProjectUserLink(project_id=bar.id, user_id=user_with_access.id)
-        session.add_all([item_link, project_link])
+        session.add_all([project_link])
 
-        # user_with_full_bar_access: project access to Bar + item access to "fourth" in Bar
+        # user_with_full_bar_access: project access to Bar
         full_project_link = ProjectUserLink(project_id=bar.id, user_id=user_with_full_bar_access.id)
-        full_item_link = ConfigItemUserLink(config_item_id=fourth.id, user_id=user_with_full_bar_access.id)
-        session.add_all([full_project_link, full_item_link])
+        session.add_all([full_project_link])
 
         session.commit()
 
