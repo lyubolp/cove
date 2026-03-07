@@ -1,52 +1,49 @@
 # config-service
-A service for accessing configuration items
-
-The application should provide CRUD actions on configuration items.
-
-Configuration items can be key:value pairs, whole JSON files, Python files and other.
-
-We can have production and development configurations.
-
-Projects are either public (no API key needed) or private (login or API key needed).
-
-Some items in public projects can also be private.
+A service for managing configuration items (key-value pairs) organised into projects. Projects have per-user access control and support both JWT and API-key authentication.
 
 ## Config item CRUD
 
-- Create
-- Toogle access (public/private)
-- Change value
-- Delete item
-- Get an item by key
+- Get all items in a project
+- Get a single item by key
+- Create an item (key + string value)
+- Update an item's value or visibility
+- Delete an item
 
 ## Project CRUD
 
-- Create
-- Edit name
-- Toogle access
-- Delete project
-- Get all items in project
+- List all accessible projects
+- Get a project by ID
+- Create a project
+- Update a project's name or visibility (public / private)
+- Delete a project
+- Add a user to a project
+- Remove a user from a project
 
 ## Auth
 
 - Account creation
-- Account login
-- Limit access based on access rules
-- Add people to project and items
-- API keys registration
+- Account login — issues a JWT token
+- Limit access based on project visibility and project membership
+- API key management: create, list, retrieve, rotate, and revoke keys scoped to a project
 
 ## Production/development configurations
 
+> **Planned — not yet implemented.**
+
 ## JSON files
+
+> **Planned — not yet implemented.**
 
 ## Python files
 
+> **Planned — not yet implemented.**
 
 ## Access rules
 
-Visibility of:
+Authentication can be provided as a JWT (Bearer token) or an API key via the `x-api-key` request header.
 
-|             | Public project | Private project |
-|-------------|----------------|-----------------|
-| Public item | Everyone       | Project access  |
-| Private item| Item access    | Item access     |
+|          | Public project         | Private project                                |
+|----------|------------------------|------------------------------------------------|
+| Any item | Everyone (incl. anon.) | Users with project access, or a valid API key  |
+
+> Per-item access control is planned but not yet implemented.
