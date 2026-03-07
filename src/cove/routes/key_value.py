@@ -8,14 +8,8 @@ from cove.models.config_item import KeyValue
 from ..dependencies import get_session
 from ..models.projects import Project
 from ..models.users import User
-from ..services.auth.api_keys import (
-    api_key_header,
-    does_api_key_grant_access_to_project,
-)
-from ..services.auth.oauth2 import (
-    does_user_have_access_to_project,
-    get_current_user_non_fatal,
-)
+from ..services.auth.api_keys import api_key_header, does_api_key_grant_access_to_project
+from ..services.auth.oauth2 import does_user_have_access_to_project, get_current_user_non_fatal
 
 router = APIRouter(prefix="/key_value")
 
@@ -36,13 +30,11 @@ async def get_all_key_values(
     if not project.is_public:
         if current_user is None and api_key is None:
             raise HTTPException(status_code=403, detail="User does not have access to this project")
-        else:
-            if current_user is not None and not await does_user_have_access_to_project(
-                session, current_user, project_id
-            ):
-                raise HTTPException(status_code=403, detail="User does not have access to this project")
-            elif api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id):
-                raise HTTPException(status_code=403, detail="User does not have access to this project")
+
+        if current_user is not None and not await does_user_have_access_to_project(session, current_user, project_id):
+            raise HTTPException(status_code=403, detail="User does not have access to this project")
+        if api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id):
+            raise HTTPException(status_code=403, detail="User does not have access to this project")
 
     statement = select(KeyValue).where(KeyValue.project_id == project_id)
     items = session.exec(statement)
@@ -68,13 +60,11 @@ async def get_key_value(
     if not project.is_public:
         if current_user is None and api_key is None:
             raise HTTPException(status_code=403, detail="User does not have access to this project")
-        else:
-            if current_user is not None and not await does_user_have_access_to_project(
-                session, current_user, project_id
-            ):
-                raise HTTPException(status_code=403, detail="User does not have access to this project")
-            elif api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id):
-                raise HTTPException(status_code=403, detail="User does not have access to this project")
+
+        if current_user is not None and not await does_user_have_access_to_project(session, current_user, project_id):
+            raise HTTPException(status_code=403, detail="User does not have access to this project")
+        if api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id):
+            raise HTTPException(status_code=403, detail="User does not have access to this project")
 
     statement = select(KeyValue).where(KeyValue.project_id == project_id, KeyValue.key == key)
     result = session.exec(statement).first()
@@ -134,19 +124,19 @@ async def update_key_value(
     statement = select(KeyValue).where(KeyValue.project_id == project_id, KeyValue.key == key)
     item = session.exec(statement).first()
 
-    if item is not None:
-        if value is not None:
-            item.value = value
+    if item is None:
+        raise HTTPException(status_code=404, detail="Key not found")
 
-        if is_public is not None:
-            item.is_public = is_public
+    if value is not None:
+        item.value = value
 
-        session.add(item)
-        session.commit()
-        session.refresh(item)
-        return {"status": "OK"}
-    else:
-        return {"error": "Key not found"}
+    if is_public is not None:
+        item.is_public = is_public
+
+    session.add(item)
+    session.commit()
+    session.refresh(item)
+    return {"status": "OK"}
 
 
 @router.delete("/{project_id}/{key}")
@@ -170,9 +160,9 @@ async def delete_key_value(
     statement = select(KeyValue).where(KeyValue.project_id == project_id, KeyValue.key == key)
     item = session.exec(statement).first()
 
-    if item is not None:
-        session.delete(item)
-        session.commit()
-        return {"status": "OK"}
-    else:
-        return {"error": "Key not found"}
+    if item is None:
+        raise HTTPException(status_code=404, detail="Key not found")
+
+    session.delete(item)
+    session.commit()
+    return {"status": "OK"}

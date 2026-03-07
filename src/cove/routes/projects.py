@@ -63,24 +63,25 @@ async def get_project(
     statement = select(Project).where(Project.id == project_id)
     project = session.exec(statement).first()
 
-    if project:
-        if project.is_public:
+    if project is None:
+        return {"error": "Project not found"}
+
+    if project.is_public:
+        return project
+
+    if current_user is not None:
+        project_under_user_statement = select(ProjectUserLink).where(
+            ProjectUserLink.user_id == current_user.id,
+            ProjectUserLink.project_id == project.id,
+        )
+        user_link = session.exec(project_under_user_statement).first()
+
+        if user_link:
             return project
-        else:
-            if current_user is not None:
-                project_under_user_statement = select(ProjectUserLink).where(
-                    ProjectUserLink.user_id == current_user.id, ProjectUserLink.project_id == project.id
-                )
-                user_link = session.exec(project_under_user_statement).first()
+    elif api_key is not None and does_api_key_grant_access_to_project(session, api_key, project.id):
+        return project
 
-                if user_link:
-                    return project
-            elif api_key is not None and does_api_key_grant_access_to_project(session, api_key, project.id):
-                return project
-
-        return {"error": "Project not found"}
-    else:
-        return {"error": "Project not found"}
+    return {"error": "Project not found"}
 
 
 @router.post("/{name}")
@@ -111,19 +112,19 @@ async def update_project(
     statement = select(Project).where(Project.id == project_id)
     project = session.exec(statement).first()
 
-    if project:
-        if is_public is not None:
-            project.is_public = is_public
-
-        if name is not None:
-            project.name = name
-
-        session.add(project)
-        session.commit()
-        session.refresh(project)
-        return {"status": "OK"}
-    else:
+    if project is None:
         return {"error": "Project not found"}
+
+    if is_public is not None:
+        project.is_public = is_public
+
+    if name is not None:
+        project.name = name
+
+    session.add(project)
+    session.commit()
+    session.refresh(project)
+    return {"status": "OK"}
 
 
 @router.delete("/{project_id}", dependencies=[Depends(get_current_user_with_project_access)])
@@ -131,19 +132,22 @@ async def delete_project(project_id: str, session: Annotated[Session, Depends(ge
     statement = select(Project).where(Project.id == project_id)
     project = session.exec(statement).first()
 
-    if project:
-        user_links = session.exec(select(ProjectUserLink).where(ProjectUserLink.project_id == project.id)).all()
-        for link in user_links:
-            session.delete(link)
-
-        session.delete(project)
-        session.commit()
-        return {"status": "OK"}
-    else:
+    if project is None:
         return {"error": "Project not found"}
 
+    user_links = session.exec(select(ProjectUserLink).where(ProjectUserLink.project_id == project.id)).all()
+    for link in user_links:
+        session.delete(link)
 
-@router.post("/{project_id}/access/{user_id}", dependencies=[Depends(get_current_user_with_project_access)])
+    session.delete(project)
+    session.commit()
+    return {"status": "OK"}
+
+
+@router.post(
+    "/{project_id}/access/{user_id}",
+    dependencies=[Depends(get_current_user_with_project_access)],
+)
 async def add_user_to_project(
     project_id: str, user_id: str, session: Annotated[Session, Depends(get_session)]
 ) -> dict[str, str]:
@@ -153,7 +157,10 @@ async def add_user_to_project(
     return {"status": "OK"}
 
 
-@router.delete("/{project_id}/access/{user_id}", dependencies=[Depends(get_current_user_with_project_access)])
+@router.delete(
+    "/{project_id}/access/{user_id}",
+    dependencies=[Depends(get_current_user_with_project_access)],
+)
 async def remove_user_from_project(
     project_id: str, user_id: str, session: Annotated[Session, Depends(get_session)]
 ) -> dict[str, str]:
@@ -162,9 +169,9 @@ async def remove_user_from_project(
     )
     link = session.exec(statement).first()
 
-    if link:
-        session.delete(link)
-        session.commit()
-        return {"status": "OK"}
-    else:
+    if link is None:
         return {"error": "Link not found"}
+
+    session.delete(link)
+    session.commit()
+    return {"status": "OK"}

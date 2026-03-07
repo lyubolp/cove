@@ -62,7 +62,14 @@ def _seed_db(session):
     user_without_access = User(username="user_without_access", password_hash="not_a_real_hash")
     user_with_full_bar_access = User(username="user_with_full_bar_access", password_hash="not_a_real_hash")
     user_with_foo_access = User(username="user_with_foo_access", password_hash="not_a_real_hash")
-    session.add_all([user_with_access, user_without_access, user_with_full_bar_access, user_with_foo_access])
+    session.add_all(
+        [
+            user_with_access,
+            user_without_access,
+            user_with_full_bar_access,
+            user_with_foo_access,
+        ]
+    )
     session.flush()
 
     # Access links

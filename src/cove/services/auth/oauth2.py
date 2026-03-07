@@ -56,7 +56,8 @@ def create_access_token(data: dict) -> str:
 
 
 async def get_current_user(
-    session: Annotated[Session, Depends(get_session)], token: Annotated[str, Depends(oauth2_scheme)]
+    session: Annotated[Session, Depends(get_session)],
+    token: Annotated[str, Depends(oauth2_scheme)],
 ) -> User:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -66,8 +67,8 @@ async def get_current_user(
             raise HTTPException(status_code=401, detail="Could not validate credentials")
 
         token_data = TokenData(user_id=user_id)
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Could not validate credentials")
+    except jwt.PyJWTError as exc:
+        raise HTTPException(status_code=401, detail="Could not validate credentials") from exc
 
     statement = select(User).where(User.id == token_data.user_id)
     user = session.exec(statement).first()
@@ -79,7 +80,8 @@ async def get_current_user(
 
 
 async def get_current_user_non_fatal(
-    session: Annotated[Session, Depends(get_session)], token: Annotated[str | None, Depends(oauth2_scheme_optional)]
+    session: Annotated[Session, Depends(get_session)],
+    token: Annotated[str | None, Depends(oauth2_scheme_optional)],
 ) -> User | None:
     print(f"{token=}")
     if token is None:
@@ -108,7 +110,8 @@ async def does_user_have_access_to_project(
 ) -> bool:
 
     statement = select(ProjectUserLink).where(
-        ProjectUserLink.project_id == project_id, ProjectUserLink.user_id == current_user.id
+        ProjectUserLink.project_id == project_id,
+        ProjectUserLink.user_id == current_user.id,
     )
 
     return session.exec(statement).first() is not None

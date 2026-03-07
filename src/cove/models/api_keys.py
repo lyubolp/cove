@@ -22,4 +22,3 @@ class APIKeyCreated(APIKeyPublic):
     """Returned only on create & rotate — includes the raw key value once."""
 
     key: str
-
