@@ -1,0 +1,10 @@
+*cache*
+.vscode
+
+.venv
+
+.openapi
+.env
+
+database.db
+justfile
