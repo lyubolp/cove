@@ -12,6 +12,8 @@ RUN uv sync
 
 RUN uv run alembic upgrade ff71e85db90d
 
+RUN echo "SECRET_KEY=$(openssl rand -hex 32)" > .env
+
 EXPOSE 8000
 
 ENTRYPOINT ["uv", "run",  "fastapi", "run", "main.py"]
