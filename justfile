@@ -1,4 +1,4 @@
-packages := "grader,desktop"
+# packages := "grader,desktop"
 project_content := "src main.py"
 
 init:
@@ -15,18 +15,13 @@ lint:
     uv run complexipy .
 
 # Tests
-test: unit_tests functional_tests
+test:
+    uv run pytest tests/ -v
 
-unit_tests:
-    uv run -m unittest discover -s tests/unit -p "test_*.py" -v
-
-functional_tests:
-    uv run -m unittest discover -s tests/functional -p "test_*.py"
-
-coverage:
-    uv run coverage run --source={{packages}} -m unittest discover -s tests/unit -p "test_*.py"
-    uv run coverage lcov -o lcov.info
-    uv run coverage report -m --fail-under 85 --sort=cover
+# coverage:
+#     uv run coverage run --source={{packages}} -m unittest discover -s tests/unit -p "test_*.py"
+#     uv run coverage lcov -o lcov.info
+#     uv run coverage report -m --fail-under 85 --sort=cover
 
 # docs:
 #     uv run sphinx-apidoc -o docs/source grader
@@ -41,11 +36,3 @@ clean:
     rm -rf __pycache__
     rm -rf .complexipy_cache
 
-
-build_diagrams:
-    java -jar ~/plantuml-1.2025.4.jar ./docs/diagrams/*.puml -o out
-
-build_docker:
-    uv sync
-    uv lock
-    docker build -f Dockerfile -t pygrader:latest .
