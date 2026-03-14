@@ -10,7 +10,7 @@ from cove.dependencies import get_session
 
 # Import all models so SQLModel.metadata is fully populated before create_all
 from cove.models.api_keys import APIKey
-from cove.models.config_item import KeyValue
+from cove.models.config_item import JSONConfig, KeyValue, PythonConfig
 from cove.models.projects import Project, ProjectUserLink
 from cove.models.users import User
 from cove.services.auth.api_keys import get_api_key_hash
@@ -55,6 +55,18 @@ def _seed_db(session):
     third = KeyValue(project_id=bar.id, key="third", value="3")
     fourth = KeyValue(project_id=bar.id, key="fourth", value="4")
     session.add_all([first, second, third, fourth])
+    session.flush()
+
+    # JSON items
+    json_foo = JSONConfig(project_id=foo.id, key="json_first", json_value={"count": 1})
+    json_bar = JSONConfig(project_id=bar.id, key="json_third", json_value={"count": 3})
+    session.add_all([json_foo, json_bar])
+    session.flush()
+
+    # Python items
+    python_foo = PythonConfig(project_id=foo.id, key="python_first", python_value="print('hello')")
+    python_bar = PythonConfig(project_id=bar.id, key="python_third", python_value="print('bar')")
+    session.add_all([python_foo, python_bar])
     session.flush()
 
     # Users
@@ -108,6 +120,10 @@ def _seed_db(session):
         "bar_api_key_raw": bar_api_key_raw,
         "foo_api_key_id": foo_api_key.id,
         "foo_api_key_raw": foo_api_key_raw,
+        "json_foo_key": json_foo.key,
+        "json_bar_key": json_bar.key,
+        "python_foo_key": python_foo.key,
+        "python_bar_key": python_bar.key,
     }
 
 

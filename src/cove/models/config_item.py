@@ -2,6 +2,8 @@
 
 import uuid
 
+from sqlalchemy import JSON as SAJson
+from sqlalchemy import Column
 from sqlmodel import Field, SQLModel
 
 
@@ -22,9 +24,21 @@ class KeyValue(ConfigItem, table=True):
     value: str
 
 
-# class JSONConfig(ConfigItem):
-#     json_value: dict
+class JSONConfig(ConfigItem, table=True):
+    """A JSON configuration item belonging to a project.
+
+    The ``json_value`` field is stored as a JSON TEXT column in SQLite.
+    """
+
+    key: str
+    json_value: dict = Field(sa_column=Column(SAJson))
 
 
-# class PythonConfig(ConfigItem):
-#     python_value: str
+class PythonConfig(ConfigItem, table=True):
+    """A Python code configuration item belonging to a project.
+
+    The ``python_value`` field stores a Python code snippet as plain text.
+    """
+
+    key: str
+    python_value: str
