@@ -2,8 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlmodel import Session, select
 
 from cove.models.config_item import PythonConfig
@@ -15,10 +14,6 @@ from ..services.auth.api_keys import api_key_header, does_api_key_grant_access_t
 from ..services.auth.oauth2 import does_user_have_access_to_project, get_current_user_non_fatal
 
 router = APIRouter(prefix="/python_item")
-
-
-class PythonValueBody(BaseModel):
-    value: str
 
 
 @router.get("/{project_id}")
@@ -92,7 +87,7 @@ async def get_python_item(
 async def create_python_item(
     project_id: str,
     key: str,
-    body: PythonValueBody,
+    body: Annotated[str, Body(media_type="text/plain")],
     session: Annotated[Session, Depends(get_session)],
     current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
     api_key: Annotated[str | None, Depends(api_key_header)],
@@ -111,7 +106,7 @@ async def create_python_item(
     if api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id):
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
-    item = PythonConfig(project_id=project_id, key=key, python_value=body.value)
+    item = PythonConfig(project_id=project_id, key=key, python_value=body)
     session.add(item)
     session.commit()
     session.refresh(item)
@@ -122,7 +117,7 @@ async def create_python_item(
 async def update_python_item(
     project_id: str,
     key: str,
-    body: PythonValueBody,
+    body: Annotated[str, Body(media_type="text/plain")],
     session: Annotated[Session, Depends(get_session)],
     current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
     api_key: Annotated[str | None, Depends(api_key_header)],
@@ -148,7 +143,7 @@ async def update_python_item(
     if item is None:
         return {"error": "Key not found"}
 
-    item.python_value = body.value
+    item.python_value = body
     session.add(item)
     session.commit()
     session.refresh(item)

@@ -107,7 +107,8 @@ def test_create_python_item_success(make_write_client, write_seeded_data):
     client = make_write_client(current_user=write_seeded_data["user_with_access"])
     response = client.post(
         f"/python_item/{write_seeded_data['bar_id']}/new_python_key",
-        json={"value": "x = 1 + 1"},
+        content="x = 1 + 1",
+        headers={"Content-Type": "text/plain"},
     )
     assert response.status_code == 200
     assert response.json()["status"] == "OK"
@@ -117,8 +118,8 @@ def test_create_python_item_api_key_auth(make_write_client, write_seeded_data):
     client = make_write_client()
     response = client.post(
         f"/python_item/{write_seeded_data['bar_id']}/apikey_python_key",
-        json={"value": "import os"},
-        headers={"x-api-key": write_seeded_data["bar_api_key_raw"]},
+        content="import os",
+        headers={"Content-Type": "text/plain", "x-api-key": write_seeded_data["bar_api_key_raw"]},
     )
     assert response.status_code == 200
     assert response.json()["status"] == "OK"
@@ -128,7 +129,8 @@ def test_create_python_item_no_auth_returns_403(make_write_client, write_seeded_
     client = make_write_client()
     response = client.post(
         f"/python_item/{write_seeded_data['bar_id']}/noauth_python_key",
-        json={"value": "pass"},
+        content="pass",
+        headers={"Content-Type": "text/plain"},
     )
     assert response.status_code == 403
 
@@ -137,7 +139,8 @@ def test_create_python_item_without_project_access_returns_403(make_write_client
     client = make_write_client(current_user=write_seeded_data["user_without_access"])
     response = client.post(
         f"/python_item/{write_seeded_data['bar_id']}/hacked_python_key",
-        json={"value": "pass"},
+        content="pass",
+        headers={"Content-Type": "text/plain"},
     )
     assert response.status_code == 403
 
@@ -151,7 +154,8 @@ def test_update_python_item_success(make_write_client, write_seeded_data):
     client = make_write_client(current_user=write_seeded_data["user_with_access"])
     response = client.patch(
         f"/python_item/{write_seeded_data['bar_id']}/python_third",
-        json={"value": "print('updated')"},
+        content="print('updated')",
+        headers={"Content-Type": "text/plain"},
     )
     assert response.status_code == 200
     assert response.json()["status"] == "OK"
@@ -161,8 +165,8 @@ def test_update_python_item_api_key_auth(make_write_client, write_seeded_data):
     client = make_write_client()
     response = client.patch(
         f"/python_item/{write_seeded_data['bar_id']}/python_third",
-        json={"value": "print('api-updated')"},
-        headers={"x-api-key": write_seeded_data["bar_api_key_raw"]},
+        content="print('api-updated')",
+        headers={"Content-Type": "text/plain", "x-api-key": write_seeded_data["bar_api_key_raw"]},
     )
     assert response.status_code == 200
     assert response.json()["status"] == "OK"
@@ -172,7 +176,8 @@ def test_update_python_item_no_auth_returns_403(make_write_client, write_seeded_
     client = make_write_client()
     response = client.patch(
         f"/python_item/{write_seeded_data['bar_id']}/python_third",
-        json={"value": "hacked()"},
+        content="hacked()",
+        headers={"Content-Type": "text/plain"},
     )
     assert response.status_code == 403
 
@@ -181,7 +186,8 @@ def test_update_python_item_without_project_access_returns_403(make_write_client
     client = make_write_client(current_user=write_seeded_data["user_without_access"])
     response = client.patch(
         f"/python_item/{write_seeded_data['bar_id']}/python_third",
-        json={"value": "hacked()"},
+        content="hacked()",
+        headers={"Content-Type": "text/plain"},
     )
     assert response.status_code == 403
 
@@ -190,7 +196,8 @@ def test_update_nonexistent_python_key_returns_error(make_write_client, write_se
     client = make_write_client(current_user=write_seeded_data["user_with_access"])
     response = client.patch(
         f"/python_item/{write_seeded_data['bar_id']}/nonexistent",
-        json={"value": "pass"},
+        content="pass",
+        headers={"Content-Type": "text/plain"},
     )
     assert response.status_code == 200
     assert "error" in response.json()
