@@ -1,6 +1,6 @@
 [project]
 name = "cove"
-version = "1.0.0"
+version = "1.1.0"
 description = "A simple API for managing a collection of configuration items and files."
 readme = "README.md"
 requires-python = ">=3.12"
