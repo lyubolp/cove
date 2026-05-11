@@ -2,7 +2,7 @@
 
 from typing import Annotated, Sequence
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
 from cove.models.projects import Project, ProjectUserLink
@@ -87,7 +87,7 @@ async def get_project(
     elif api_key is not None and does_api_key_grant_access_to_project(session, api_key, project.id):
         return project
 
-    return {"error": "Project not found"}
+    raise HTTPException(status_code=404, detail="Project not found")
 
 
 @router.post("/{name}")

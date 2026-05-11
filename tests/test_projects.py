@@ -77,15 +77,15 @@ def test_get_private_project_with_user_access(make_client, seeded_data):
 def test_get_private_project_without_access_returns_error(make_client, seeded_data):
     client = make_client(current_user=seeded_data["user_without_access"])
     response = client.get(f"/project/{seeded_data['bar_id']}")
-    assert response.status_code == 200
-    assert "error" in response.json()
+    assert response.status_code == 404
+    assert "detail" in response.json()
 
 
 def test_get_private_project_anonymous_returns_error(make_client, seeded_data):
     client = make_client()
     response = client.get(f"/project/{seeded_data['bar_id']}")
-    assert response.status_code == 200
-    assert "error" in response.json()
+    assert response.status_code == 404
+    assert "detail" in response.json()
 
 
 def test_get_private_project_api_key_auth(make_client, seeded_data):
