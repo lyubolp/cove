@@ -81,7 +81,7 @@ async def get_json_item(
     result = session.exec(select(JSONConfig).where(JSONConfig.project_id == project_id, JSONConfig.key == key)).first()
 
     if result is None:
-        return {"error": "Key not found"}
+        raise HTTPException(status_code=404, detail="Key not found")
 
     return {"key": result.key, "json_value": result.json_value}
 

@@ -82,7 +82,7 @@ async def get_key_value(
     result = session.exec(statement).first()
 
     if result is None:
-        return {"error": "Key not found"}
+        raise HTTPException(status_code=404, detail="Key not found")
 
     return {"key": result.key, "value": result.value}
 

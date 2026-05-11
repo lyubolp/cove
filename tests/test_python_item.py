@@ -76,8 +76,8 @@ def test_get_python_item_private_project_api_key_auth(make_client, seeded_data):
 def test_get_python_item_nonexistent_key_returns_error(make_client, seeded_data):
     client = make_client()
     response = client.get(f"/python_item/{seeded_data['foo_id']}/nonexistent")
-    assert response.status_code == 200
-    assert "error" in response.json()
+    assert response.status_code == 404
+    assert "detail" in response.json()
 
 
 def test_get_python_item_nonexistent_project_returns_404(make_client):

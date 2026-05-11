@@ -78,7 +78,7 @@ async def get_python_item(
     ).first()
 
     if result is None:
-        return {"error": "Key not found"}
+        raise HTTPException(status_code=404, detail="Key not found")
 
     return {"key": result.key, "python_value": result.python_value}
 
