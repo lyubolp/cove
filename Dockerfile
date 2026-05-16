@@ -5,6 +5,8 @@ WORKDIR /app
 
 COPY . .
 
+RUN uv lock
+
 ENV UV_LOCKED=true
 ENV UV_NO_DEV=true
 
