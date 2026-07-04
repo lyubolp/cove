@@ -70,3 +70,24 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ghcr.io/${{ github.repository }}:latest
+
+  tag:
+    runs-on: ubuntu-latest
+    needs: [lint, test, docker]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version from pyproject.toml
+        id: version
+        run: |
+          VERSION=$(grep -m1 '^version = ' pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Create or move tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}" --force
