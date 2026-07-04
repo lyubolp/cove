@@ -11,7 +11,12 @@ from cove.models.projects import Project, ProjectUserLink
 from ..dependencies import get_session
 from ..models.users import User
 from ..services.auth.api_keys import api_key_header, does_api_key_grant_access_to_project
-from ..services.auth.oauth2 import does_user_have_access_to_project, get_current_user, get_current_user_non_fatal, get_current_user_with_project_access
+from ..services.auth.oauth2 import (
+    does_user_have_access_to_project,
+    get_current_user,
+    get_current_user_non_fatal,
+    get_current_user_with_project_access,
+)
 
 router = APIRouter(prefix="/project")
 
