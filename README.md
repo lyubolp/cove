@@ -30,13 +30,21 @@ A service for managing configuration items (key-value pairs) organised into proj
 
 > **Planned — not yet implemented.**
 
-## JSON files
+## JSON items
 
-> **Planned — not yet implemented.**
+- Get all JSON items in a project
+- Get a single JSON item by key
+- Create a JSON item (key + JSON object value)
+- Update a JSON item's value (full replacement)
+- Delete a JSON item
 
-## Python files
+## Python items
 
-> **Planned — not yet implemented.**
+- Get all Python items in a project
+- Get a single Python item by key
+- Create a Python item (key + Python code string)
+- Update a Python item's value (full replacement)
+- Delete a Python item
 
 ## Access rules
 
