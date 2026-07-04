@@ -8,20 +8,17 @@ init:
 
 # Linting
 lint:
-    uv run ruff format
-    uv run pylint {{project_content}} --fail-under 9
+    uv run ruff check {{project_content}} --fix
+    uv run ruff format {{project_content}}
     uv run mypy {{project_content}} --ignore-missing-imports
-    uv run ruff check {{project_content}}
     uv run complexipy .
 
 # Tests
 test:
     uv run pytest tests/ -v
 
-# coverage:
-#     uv run coverage run --source={{packages}} -m unittest discover -s tests/unit -p "test_*.py"
-#     uv run coverage lcov -o lcov.info
-#     uv run coverage report -m --fail-under 85 --sort=cover
+coverage:
+    uv run pytest tests/ --cov={{project_content}} --cov-report=term-missing --cov-report=lcov:lcov.info --cov-fail-under=85
 
 # docs:
 #     uv run sphinx-apidoc -o docs/source grader
@@ -35,4 +32,3 @@ clean:
     rm -f lcov.info
     rm -rf __pycache__
     rm -rf .complexipy_cache
-
