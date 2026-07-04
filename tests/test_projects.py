@@ -225,3 +225,67 @@ def test_remove_nonexistent_link_returns_error(make_write_authed_client, write_s
     response = client.delete(f"/project/{write_seeded_data['bar_id']}/access/{target_user_id}")
     assert response.status_code == 200
     assert "error" in response.json()
+
+
+# ---------------------------------------------------------------------------
+# DELETE /project/{project_id}/items  — clears all items from a project
+# ---------------------------------------------------------------------------
+
+
+def test_clear_project_items_success_with_user_auth(make_write_client, write_seeded_data):
+    client = make_write_client(current_user=write_seeded_data["user_with_access"])
+    response = client.delete(f"/project/{write_seeded_data['bar_id']}/items")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "OK"
+    # Bar has 2 KeyValue + 1 JSONConfig + 1 PythonConfig = 4 items
+    assert body["deleted_count"] == 4
+
+
+def test_clear_project_items_success_with_api_key(make_write_client, write_seeded_data):
+    client = make_write_client()
+    response = client.delete(
+        f"/project/{write_seeded_data['bar_id']}/items",
+        headers={"x-api-key": write_seeded_data["bar_api_key_raw"]},
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "OK"
+
+
+def test_clear_project_items_no_auth_returns_403(make_write_client, write_seeded_data):
+    client = make_write_client()
+    response = client.delete(f"/project/{write_seeded_data['bar_id']}/items")
+    assert response.status_code == 403
+
+
+def test_clear_project_items_without_project_access_returns_403(make_write_client, write_seeded_data):
+    client = make_write_client(current_user=write_seeded_data["user_without_access"])
+    response = client.delete(f"/project/{write_seeded_data['bar_id']}/items")
+    assert response.status_code == 403
+
+
+def test_clear_project_items_invalid_api_key_returns_403(make_write_client, write_seeded_data):
+    client = make_write_client()
+    response = client.delete(
+        f"/project/{write_seeded_data['bar_id']}/items",
+        headers={"x-api-key": "invalid-key"},
+    )
+    assert response.status_code == 403
+
+
+def test_clear_project_items_nonexistent_project_returns_404(make_write_client, write_seeded_data):
+    client = make_write_client(current_user=write_seeded_data["user_with_access"])
+    response = client.delete("/project/nonexistent-id/items")
+    assert response.status_code == 404
+
+
+def test_clear_project_items_empty_project_returns_zero(make_write_authed_client, write_seeded_data):
+    # Create a fresh empty project first
+    client = make_write_authed_client(current_user=write_seeded_data["user_with_access"])
+    create_resp = client.post("/project/EmptyProject")
+    assert create_resp.status_code == 200
+    new_project_id = create_resp.json()["project_id"]
+
+    response = client.delete(f"/project/{new_project_id}/items")
+    assert response.status_code == 200
+    assert response.json()["deleted_count"] == 0

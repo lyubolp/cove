@@ -5,12 +5,13 @@ from typing import Annotated, Sequence
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
+from cove.models.config_item import JSONConfig, KeyValue, PythonConfig
 from cove.models.projects import Project, ProjectUserLink
 
 from ..dependencies import get_session
 from ..models.users import User
 from ..services.auth.api_keys import api_key_header, does_api_key_grant_access_to_project
-from ..services.auth.oauth2 import get_current_user, get_current_user_non_fatal, get_current_user_with_project_access
+from ..services.auth.oauth2 import does_user_have_access_to_project, get_current_user, get_current_user_non_fatal, get_current_user_with_project_access
 
 router = APIRouter(prefix="/project")
 
@@ -172,6 +173,43 @@ async def add_user_to_project(
     session.add(link)
     session.commit()
     return {"status": "OK"}
+
+
+@router.delete("/{project_id}/items")
+async def clear_project_items(
+    project_id: str,
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
+    api_key: Annotated[str | None, Depends(api_key_header)],
+) -> dict[str, object]:
+    """Delete all key-value, JSON, and Python items belonging to a project.
+
+    Requires authentication (JWT or API key) and project access.
+    Returns the total number of deleted items across all types.
+    """
+    project = session.exec(select(Project).where(Project.id == project_id)).first()
+
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if current_user is None and api_key is None:
+        raise HTTPException(status_code=403, detail="User does not have access to this project")
+
+    if current_user is not None and not await does_user_have_access_to_project(session, current_user, project_id):
+        raise HTTPException(status_code=403, detail="User does not have access to this project")
+
+    if api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id):
+        raise HTTPException(status_code=403, detail="User does not have access to this project")
+
+    deleted_count = 0
+    for model in (KeyValue, JSONConfig, PythonConfig):
+        items = session.exec(select(model).where(model.project_id == project_id)).all()
+        for item in items:
+            session.delete(item)
+            deleted_count += 1
+
+    session.commit()
+    return {"status": "OK", "deleted_count": deleted_count}
 
 
 @router.delete(
