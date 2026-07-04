@@ -175,6 +175,44 @@ async def add_user_to_project(
     return {"status": "OK"}
 
 
+@router.get("/{project_id}/items")
+async def get_all_project_items(
+    project_id: str,
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User | None, Depends(get_current_user_non_fatal)],
+    api_key: Annotated[str | None, Depends(api_key_header)],
+) -> dict[str, object]:
+    """Return all items (key-value, JSON, and Python) belonging to a project.
+
+    Public projects are accessible anonymously. Private projects require the caller
+    to be authenticated (JWT or API key) and have project access.
+    """
+    project = session.exec(select(Project).where(Project.id == project_id)).first()
+
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if not project.is_public:
+        if current_user is None and api_key is None:
+            raise HTTPException(status_code=403, detail="User does not have access to this project")
+
+        if current_user is not None and not await does_user_have_access_to_project(session, current_user, project_id):
+            raise HTTPException(status_code=403, detail="User does not have access to this project")
+
+        if api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id):
+            raise HTTPException(status_code=403, detail="User does not have access to this project")
+
+    key_value_items = session.exec(select(KeyValue).where(KeyValue.project_id == project_id)).all()
+    json_items = session.exec(select(JSONConfig).where(JSONConfig.project_id == project_id)).all()
+    python_items = session.exec(select(PythonConfig).where(PythonConfig.project_id == project_id)).all()
+
+    return {
+        "key_value": [{"key": item.key, "value": item.value} for item in key_value_items],
+        "json": [{"key": item.key, "json_value": item.json_value} for item in json_items],
+        "python": [{"key": item.key, "python_value": item.python_value} for item in python_items],
+    }
+
+
 @router.delete("/{project_id}/items")
 async def clear_project_items(
     project_id: str,

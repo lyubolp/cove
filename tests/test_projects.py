@@ -219,12 +219,76 @@ def test_remove_user_from_project_without_access_returns_403(make_write_authed_c
 
 
 def test_remove_nonexistent_link_returns_error(make_write_authed_client, write_seeded_data):
-    """User with access tries to remove a link that does not exist."""
     client = make_write_authed_client(current_user=write_seeded_data["user_with_access"])
     target_user_id = write_seeded_data["user_without_access"].id
     response = client.delete(f"/project/{write_seeded_data['bar_id']}/access/{target_user_id}")
     assert response.status_code == 200
     assert "error" in response.json()
+
+
+# ---------------------------------------------------------------------------
+# GET /project/{project_id}/items  — returns all items grouped by type
+# ---------------------------------------------------------------------------
+
+
+def test_get_all_project_items_public_project_anonymous(make_client, seeded_data):
+    client = make_client()
+    response = client.get(f"/project/{seeded_data['foo_id']}/items")
+    assert response.status_code == 200
+    body = response.json()
+    assert "key_value" in body
+    assert "json" in body
+    assert "python" in body
+
+
+def test_get_all_project_items_contains_all_types(make_client, seeded_data):
+    client = make_client(current_user=seeded_data["user_with_access"])
+    response = client.get(f"/project/{seeded_data['bar_id']}/items")
+    assert response.status_code == 200
+    body = response.json()
+    kv_keys = [i["key"] for i in body["key_value"]]
+    assert "third" in kv_keys
+    assert "fourth" in kv_keys
+    json_keys = [i["key"] for i in body["json"]]
+    assert seeded_data["json_bar_key"] in json_keys
+    python_keys = [i["key"] for i in body["python"]]
+    assert seeded_data["python_bar_key"] in python_keys
+
+
+def test_get_all_project_items_private_project_with_api_key(make_client, seeded_data):
+    client = make_client()
+    response = client.get(
+        f"/project/{seeded_data['bar_id']}/items",
+        headers={"x-api-key": seeded_data["bar_api_key_raw"]},
+    )
+    assert response.status_code == 200
+
+
+def test_get_all_project_items_private_project_no_auth_returns_403(make_client, seeded_data):
+    client = make_client()
+    response = client.get(f"/project/{seeded_data['bar_id']}/items")
+    assert response.status_code == 403
+
+
+def test_get_all_project_items_without_project_access_returns_403(make_client, seeded_data):
+    client = make_client(current_user=seeded_data["user_without_access"])
+    response = client.get(f"/project/{seeded_data['bar_id']}/items")
+    assert response.status_code == 403
+
+
+def test_get_all_project_items_invalid_api_key_returns_403(make_client, seeded_data):
+    client = make_client()
+    response = client.get(
+        f"/project/{seeded_data['bar_id']}/items",
+        headers={"x-api-key": "invalid-key"},
+    )
+    assert response.status_code == 403
+
+
+def test_get_all_project_items_nonexistent_project_returns_404(make_client):
+    client = make_client()
+    response = client.get("/project/nonexistent-id/items")
+    assert response.status_code == 404
 
 
 # ---------------------------------------------------------------------------
