@@ -107,6 +107,17 @@ def _seed_db(session):
     )
     session.add(foo_api_key)
 
+    # Read-only API key for user_with_access scoped to Bar
+    bar_read_only_api_key_raw = "test-bar-read-only-api-key-raw-value"
+    session.add(
+        APIKey(
+            user_id=user_with_access.id,
+            key=get_api_key_hash(bar_read_only_api_key_raw),
+            access_for_project_id=bar.id,
+            read_only=True,
+        )
+    )
+
     session.commit()
 
     return {
@@ -120,6 +131,7 @@ def _seed_db(session):
         "bar_api_key_raw": bar_api_key_raw,
         "foo_api_key_id": foo_api_key.id,
         "foo_api_key_raw": foo_api_key_raw,
+        "bar_read_only_api_key_raw": bar_read_only_api_key_raw,
         "json_foo_key": json_foo.key,
         "json_bar_key": json_bar.key,
         "python_foo_key": python_foo.key,

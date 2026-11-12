@@ -20,8 +20,12 @@ async def create_api_key(
     project_id: str,
     session: Annotated[Session, Depends(get_session)],
     current_user: Annotated[User, Depends(get_current_user)],
+    read_only: bool = False,
 ):
-    """Generate a new API key scoped to a project. Returns the key value once."""
+    """Generate a new API key scoped to a project. Returns the key value once.
+
+    Read-only keys can read items but not create, update, or delete them.
+    """
     if not await does_user_have_access_to_project(session, current_user, project_id):
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
@@ -30,12 +34,14 @@ async def create_api_key(
         user_id=current_user.id,
         key=get_api_key_hash(raw_key),
         access_for_project_id=project_id,
+        read_only=read_only,
     )
 
     result_key = APIKeyCreated(
         id=api_key.id,
         key=raw_key,
         access_for_project_id=project_id,
+        read_only=read_only,
     )
 
     session.add(api_key)
@@ -72,11 +78,17 @@ async def rotate_api_key(
 ):
     """Rotate an API key, replacing its key value. The new key value is returned once."""
     api_key = _get_own_key_or_raise(key_id, current_user, session)
-    api_key.key = str(uuid.uuid4())
+    raw_key = str(uuid.uuid4())
+    api_key.key = get_api_key_hash(raw_key)
     session.add(api_key)
     session.commit()
     session.refresh(api_key)
-    return api_key
+    return APIKeyCreated(
+        id=api_key.id,
+        key=raw_key,
+        access_for_project_id=api_key.access_for_project_id,
+        read_only=api_key.read_only,
+    )
 
 
 @router.delete("/{key_id}", status_code=204)

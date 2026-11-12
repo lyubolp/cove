@@ -241,7 +241,7 @@ async def clear_project_items(
     if current_user is not None and not await does_user_have_access_to_project(session, current_user, project_id):
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
-    if api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id):
+    if api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id, write=True):
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
     deleted_count = 0

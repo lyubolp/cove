@@ -107,7 +107,7 @@ async def create_key_value(
     if current_user is not None and await does_user_have_access_to_project(session, current_user, project_id) is False:
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
-    if api_key is not None and does_api_key_grant_access_to_project(session, api_key, project_id) is False:
+    if api_key is not None and does_api_key_grant_access_to_project(session, api_key, project_id, write=True) is False:
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
     item = KeyValue(project_id=project_id, key=key, value=value)
@@ -141,7 +141,7 @@ async def update_key_value(
     if current_user is not None and await does_user_have_access_to_project(session, current_user, project_id) is False:
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
-    if api_key is not None and does_api_key_grant_access_to_project(session, api_key, project_id) is False:
+    if api_key is not None and does_api_key_grant_access_to_project(session, api_key, project_id, write=True) is False:
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
     statement = select(KeyValue).where(KeyValue.project_id == project_id, KeyValue.key == key)
@@ -181,7 +181,7 @@ async def delete_key_value(
     if current_user is not None and await does_user_have_access_to_project(session, current_user, project_id) is False:
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
-    if api_key is not None and does_api_key_grant_access_to_project(session, api_key, project_id) is False:
+    if api_key is not None and does_api_key_grant_access_to_project(session, api_key, project_id, write=True) is False:
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
     statement = select(KeyValue).where(KeyValue.project_id == project_id, KeyValue.key == key)

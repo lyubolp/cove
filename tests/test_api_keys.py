@@ -155,3 +155,40 @@ def test_delete_api_key_nonexistent_returns_404(make_write_authed_client, write_
     client = make_write_authed_client(current_user=write_seeded_data["user_with_access"])
     response = client.delete("/api_keys/nonexistent-id")
     assert response.status_code == 404
+
+
+def test_read_only_api_key_can_read_private_project(make_client, seeded_data):
+    client = make_client()
+    response = client.get(
+        f"/key_value/{seeded_data['bar_id']}",
+        headers={"x-api-key": seeded_data["bar_read_only_api_key_raw"]},
+    )
+    assert response.status_code == 200
+
+
+def test_read_only_api_key_cannot_write(make_write_client, write_seeded_data):
+    client = make_write_client()
+    headers = {"x-api-key": write_seeded_data["bar_read_only_api_key_raw"]}
+    bar_id = write_seeded_data["bar_id"]
+
+    assert client.post(f"/key_value/{bar_id}/new_key/new_value", headers=headers).status_code == 403
+    assert client.patch(f"/key_value/{bar_id}/third?value=x", headers=headers).status_code == 403
+    assert client.delete(f"/key_value/{bar_id}/third", headers=headers).status_code == 403
+    assert client.delete(f"/project/{bar_id}/items", headers=headers).status_code == 403
+
+
+def test_create_read_only_api_key(make_write_authed_client, write_seeded_data):
+    client = make_write_authed_client(current_user=write_seeded_data["user_with_access"])
+    response = client.post(f"/api_keys/{write_seeded_data['bar_id']}?read_only=true")
+    assert response.status_code == 201
+    assert response.json()["read_only"] is True
+
+
+def test_rotated_api_key_grants_access_and_old_key_does_not(make_write_authed_client, write_seeded_data):
+    client = make_write_authed_client(current_user=write_seeded_data["user_with_access"])
+    new_key = client.patch(f"/api_keys/{write_seeded_data['bar_api_key_id']}").json()["key"]
+    assert new_key != write_seeded_data["bar_api_key_raw"]
+
+    bar_url = f"/key_value/{write_seeded_data['bar_id']}"
+    assert client.get(bar_url, headers={"x-api-key": new_key}).status_code == 200
+    assert client.get(bar_url, headers={"x-api-key": write_seeded_data["bar_api_key_raw"]}).status_code == 403

@@ -13,6 +13,7 @@ class APIKey(SQLModel, table=True):
     user_id: str = Field(foreign_key="user.id")
     key: str
     access_for_project_id: str = Field(foreign_key="project.id")
+    read_only: bool = False
 
 
 class APIKeyPublic(BaseModel):
@@ -20,6 +21,7 @@ class APIKeyPublic(BaseModel):
 
     id: str
     access_for_project_id: str
+    read_only: bool = False
 
 
 class APIKeyCreated(APIKeyPublic):

@@ -106,7 +106,7 @@ async def create_json_item(
     if current_user is not None and not await does_user_have_access_to_project(session, current_user, project_id):
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
-    if api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id):
+    if api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id, write=True):
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
     item = JSONConfig(project_id=project_id, key=key, json_value=body.value)
@@ -136,7 +136,7 @@ async def update_json_item(
     if current_user is not None and not await does_user_have_access_to_project(session, current_user, project_id):
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
-    if api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id):
+    if api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id, write=True):
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
     item = session.exec(select(JSONConfig).where(JSONConfig.project_id == project_id, JSONConfig.key == key)).first()
@@ -170,7 +170,7 @@ async def delete_json_item(
     if current_user is not None and not await does_user_have_access_to_project(session, current_user, project_id):
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
-    if api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id):
+    if api_key is not None and not does_api_key_grant_access_to_project(session, api_key, project_id, write=True):
         raise HTTPException(status_code=403, detail="User does not have access to this project")
 
     item = session.exec(select(JSONConfig).where(JSONConfig.project_id == project_id, JSONConfig.key == key)).first()
