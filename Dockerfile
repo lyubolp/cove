@@ -12,11 +12,11 @@ ENV UV_NO_DEV=true
 
 RUN uv sync
 
-RUN uv run alembic upgrade ff71e85db90d
-RUN uv run alembic upgrade a3c1f82e4d56
-
 RUN echo "SECRET_KEY=$(openssl rand -hex 32)" > .env
+
+ENV COVE_DB_PATH=/data/database.db
+VOLUME /data
 
 EXPOSE 8000
 
-ENTRYPOINT ["uv", "run",  "fastapi", "run", "main.py"]
+ENTRYPOINT ["sh", "-c", "uv run alembic upgrade head && uv run fastapi run main.py"]

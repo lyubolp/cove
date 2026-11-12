@@ -1,8 +1,10 @@
 """Database engine and session dependency for the Cove application."""
 
+import os
+
 from sqlmodel import Session, create_engine
 
-engine = create_engine("sqlite:///database.db")
+engine = create_engine(f"sqlite:///{os.environ.get('COVE_DB_PATH', 'database.db')}")
 
 
 def get_session():

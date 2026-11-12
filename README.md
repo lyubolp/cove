@@ -30,6 +30,14 @@ A service for managing configuration items (key-value pairs) organised into proj
 
 > **Planned — not yet implemented.**
 
+## Database location
+
+The SQLite file path is set by the `COVE_DB_PATH` environment variable (default: `database.db`). The Docker image sets it to `/data/database.db` and declares `/data` as a volume; migrations run on container start:
+
+```bash
+docker run -v cove-data:/data -p 8000:8000 cove
+```
+
 ## JSON items
 
 - Get all JSON items in a project
